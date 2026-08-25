@@ -40,10 +40,12 @@ You can start with a simple structure and as you progress you can refine it to c
 we <3 fish
 
 ## Goals
-To build a model & visualize a map predicting salmon return to several streams in the Strait of Georgia based upon current stream conditions.
+To build a model & visualize a map predicting salmon return to several streams in the Strait of Georgia based upon current stream conditions. We have focused on 4 rivers: Nanaimo River, Qualicum River, Chemainus River, Cowichan River; and we are focused on the Fall Chinook run.
 
 ## Datasets
-- Pacific Salmon Explorer
+- Gov of Canada NuSEDS
+- Canadian Hydrological Flow Data
+- Pacific Salmon Stream Temperature
 
 ## Workflow/Roadmap
 
