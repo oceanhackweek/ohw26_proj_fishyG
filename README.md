@@ -1,8 +1,6 @@
-# ohwyy_proj_template
+# ohw26_proj_fishyG
 
-Template for starting Oceanhackweek project repos. 
-
-This repo is an example of how teams can structure their project repositories and format their project README.md file, but feel free to adapt as suits your needs.
+Repository for the OceanHackWeek26 fishyG project
 
 **Folder Structure**
 
@@ -17,32 +15,35 @@ preserve relative paths, but the dataset does not need to be added to git/GitHub
 
 You can start with a simple structure and as you progress you can refine it to contain more components. [Here](https://cookiecutter-data-science.drivendata.org/#directory-structure) is an example of a more elaborate structure for a data science project.
 
-## Project Name
+## Project fishyG
 
-## One-line Description
+## Predicting and visualizing salmon spawning in the Strait of Georgia based on local stream conditions
 
 ## Collaborators
 
 | Name                | Role                |
 |---------------------|---------------------|
-| Participant 1       |  |
-| Participant 2       |  |
-| Participant 3       |  |
+| Zoe Crookshank      |  |
+| Linnea Goh          |  |
+| Hannah Budroe       |  |
 
 
 
 ## Planning
 
-* Initial idea: "short description"
-* Ideation Slide: Add link
-* Slack channel: ohw26_proj_name
-* Final presentation: Add link
+* Initial idea: Predict and visualize salmon spawning in the Strait of Georgia based on local stream conditions
+* Ideation Slide: https://docs.google.com/presentation/d/1_KLEDpLLvtKpH3awDlZRAiOKuHzbEti4CWmhEykuCG8/edit?slide=id.g3f84d57b716_31_0#slide=id.g3f84d57b716_31_0 
+* Slack channel: ohw26_proj_fishyG
+* Final presentation: Add link tbd
 
 ## Background
+we <3 fish
 
 ## Goals
+To build a model & visualize a map predicting salmon return to several streams in the Strait of Georgia based upon current stream conditions.
 
 ## Datasets
+- Pacific Salmon Explorer
 
 ## Workflow/Roadmap
 
