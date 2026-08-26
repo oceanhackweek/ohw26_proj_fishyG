@@ -49,7 +49,7 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
-pal <- colorFactor(c("#1b9e77", "#d95f02", "#7570b3"), domain = river_coords$model)
+pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
 
 leaflet() %>%
   addProviderTiles(providers$OpenStreetMap) %>%
@@ -61,3 +61,48 @@ leaflet() %>%
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Site Map"),
+  sidebarLayout(
+    sidebarPanel(
+      checkboxGroupInput("model", "Model:",
+                         choices = sort(unique(river_coords$model)),
+                         selected = unique(river_coords$model))
+    ),
+    mainPanel(
+      leafletOutput("map", height = 600)
+    )
+  )
+)
+
+
+server <- function(input, output, session) {
+  
+  filtered <- reactive({
+    river_coords[river_coords$model %in% input$model, ]
+  })
+  
+  output$map <- renderLeaflet({
+    leaflet() %>% 
+      addProviderTiles(providers$OpenStreetMap) %>%
+      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude))
+  })
+  
+  observe({
+      leafletProxy("map", data = filtered()) %>%
+      clearGroup("stream_name_pse") %>%
+     addCircleMarkers(~longitude, ~latitude,
+                   group = "stream_name_pse",
+                   fillColor = ~pal(model),
+                   fillOpacity = 0.9,
+                   stroke = FALSE,
+                   radius = 6,
+                   popup = ~paste0("<b>", stream_name_pse, "</b><br>Model: ", model))
+  })
+  
+}
+
+shinyApp(ui, server)
+```

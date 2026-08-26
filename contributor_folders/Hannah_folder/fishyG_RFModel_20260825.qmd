@@ -4,8 +4,9 @@ format: html
 editor: visual
 ---
 
-## **fishyG script for building
-predictive model**
+## \*\*fishyG script for building
+
+predictive model\*\*
 
 For now, let's try a random forest regression model.
 
@@ -25,24 +26,48 @@ library(ggplot2)
 library(randomForest)
 ```
 
-Maybe define some pseudo code here to later replace
+#### Maybe define some pseudo code here to later replace
 
-```{r}
-#Read in csv of data
-path <- 
-df <- read.csv(path) 
+Steps
 
-#reformat data into data.frame?
-df %>% as.data.frame() #?
-#need to rename any cols or do anything else?
+1.  Read in data (csv format, 1/stream)
+    1.  reformat data as needed (rename cols?), na.omit()?)
+2.  Separate data into training & test/validation? see <https://vivekparasharr.medium.com/implementing-random-forest-regression-in-python-and-r-c424455b3e11> for more details
+3.  Run model
+    1.  salmonday \~ .
+    2.  importance = TRUE so can evaluate individual var importance (eg. what days seem to be most important?)
+    3.  decide mtry, ntree
+4.  Output R\^2 & MSE
 
-#Set parameters for function
-ntree <- x
-mtry <- x
+Read & reformat data function 1
 
-function{
-  randomForest(salmonday ~ ., data = df, ntree = ntree, mtry = mtry)
-  return() #what does this return? #can return number & MSE?
-  }
+1.  read.csv() \***Riv_Flow.csv**
 
-```
+2.  separate \$Date with /
+
+3.  transform date into numerics day of year? 0:366
+
+4.  Rename \$Value as DailyDischarge_m3_s
+
+5.  Pull the \$Year, \$DayofYear, \$DailyDischargem3_s into new data.frame
+
+6.  *do the same for temp data?*
+
+7.  read.csv() \***salmon_data.csv**
+
+8.  separate \$START_DTT & \$time_return with -
+
+9.  transform dates from above into numerics day of year 0:366
+
+10. pull the \$ANALYSIS_YR, \$TOTAL_RETURN_TO_RIVER, time_return doys
+
+11. Merge with flow dataframe by year & doy–\> expect cols: year, doy, discharge, total return, time return
+
+12. if time return doy matches the doy, new col return -\> 1; elseif time return \< doy new col return -\> 0; else return –\> 2
+
+13. subset rows return val 0:1
+
+14. end output: dataframe of year, doy, return binary, total return
+
+    | **START_DTT** |     |
+    |:--------------|:----|
