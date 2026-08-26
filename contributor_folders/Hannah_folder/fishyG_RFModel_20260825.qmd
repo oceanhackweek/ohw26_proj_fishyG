@@ -1,0 +1,48 @@
+---
+title: "fishyG_RFModel_20260825"
+format: html
+editor: visual
+---
+
+## **fishyG script for building
+predictive model**
+
+For now, let's try a random forest regression model.
+
+Here, I imagine input into the random forest model as a large dataframe\
+\$1 year\
+\$2 that year's precipitation until Jun30\
+\$3 that year's temp until Jun30\
+\$4:n average daily stream discharge\
+\$n:n average daily stream temperature\
+And the predicted output would be the date of first salmon returned (numeric 0:365)
+
+#### First, load in libraries
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(randomForest)
+```
+
+Maybe define some pseudo code here to later replace
+
+```{r}
+#Read in csv of data
+path <- 
+df <- read.csv(path) 
+
+#reformat data into data.frame?
+df %>% as.data.frame() #?
+#need to rename any cols or do anything else?
+
+#Set parameters for function
+ntree <- x
+mtry <- x
+
+function{
+  randomForest(salmonday ~ ., data = df, ntree = ntree, mtry = mtry)
+  return() #what does this return? #can return number & MSE?
+  }
+
+```
