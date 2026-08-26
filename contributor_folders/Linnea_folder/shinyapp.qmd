@@ -1,0 +1,50 @@
+---
+title: "Untitled"
+format: html
+editor: visual
+---
+
+------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+```{r load-packages, echo = FALSE, message = FALSE, warning = FALSE}
+library(shiny)
+library(rmapshaper)
+library(DT)
+library(sf)
+library(htmltools)
+library(leafsync)
+library(kableExtra)
+library(tidyverse)
+library(leaflet)
+library(ggthemes)
+library(ggridges)
+library(ggmap)
+library(lubridate)
+library(stringr)
+library(readr)
+library(broom)
+library(RColorBrewer)
+library(forcats)
+library(colorspace)
+library(visdat)
+library(naniar)
+library(ggrepel)
+library(styler)
+library(lintr)
+library(tidycensus)
+library(gt)
+library(sf)
+library(viridis)
+
+river_coords <- read_csv("~/FishyG/data/river_coordinates.csv", show_col_types = FALSE)
+```
+
+```{r}
+leaflet() %>%
+  addProviderTiles(providers$OpenStreetMap) %>%
+  addCircleMarkers(data = river_coords, ~long, ~lat)
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
