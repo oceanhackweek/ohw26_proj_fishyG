@@ -1,3 +1,7 @@
 .ipynb_checkpoints
 .DS_Store
+<<<<<<< Updated upstream
 **/.DS_Store
+=======
+.Rproj.user
+>>>>>>> Stashed changes
