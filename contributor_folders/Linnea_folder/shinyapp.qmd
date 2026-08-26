@@ -49,7 +49,7 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
-pal <- colorFactor(c("#1b9e77", "#d95f02", "#7570b3"), domain = river_coords$model)
+pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
 
 leaflet() %>%
   addProviderTiles(providers$OpenStreetMap) %>%
@@ -61,3 +61,24 @@ leaflet() %>%
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+ui <- fluidPage(
+  titlePanel("Site Map"),
+  leafletOutput("map", height = 600)
+)
+
+server <- function(input, output, session) {
+  output$map <- renderLeaflet({
+    leaflet() %>% 
+      addProviderTiles(providers$OpenStreetMap) %>%
+      addCircleMarkers(data = river_coords, ~longitude, ~latitude,
+                   fillColor = ~pal(model),
+                   fillOpacity = 0.9,
+                   stroke = FALSE,
+                   radius = 6)
+  })
+}
+
+shinyApp(ui, server)
+```
