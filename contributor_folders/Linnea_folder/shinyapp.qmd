@@ -52,6 +52,16 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
+crs(weather_raster) <- "EPSG:4326"                        # if missing
+weather_raster <- rotate(weather_raster)                               # if longitudes are 0–360
+weather_raster <- crop(weather_raster, ext(-135, -120, 47, 56))        # your area only
+weather_raster <- aggregate(weather_raster, fact = 2)                  # halve resolution
+
+pal_r <- colorNumeric("YlOrRd", values(weather_raster), na.color = "transparent")
+
+```
+
+```{r}
 pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
 
 leaflet() %>%
@@ -97,7 +107,9 @@ server <- function(input, output, session) {
   output$map <- renderLeaflet({
     leaflet() %>% 
       addProviderTiles(providers$OpenStreetMap) %>%
-      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude))
+      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
+      ddRasterImage(weather_raster[[1]], colors = pal_r, opacity = 0.7,
+                   group = "SST", project = FALSE)
   })
   
   observe({
