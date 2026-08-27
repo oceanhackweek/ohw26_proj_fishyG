@@ -2,7 +2,7 @@
 """
 Aggregate merged_tavg_prcp_1960_2025.nc (daily) to calendar-month values.
 
-    tavg -> monthly mean of daily values
+    tavg -> monthly maximum of daily values
     pr   -> monthly total (sum of daily mm/day values -> mm/month)
 
 Static per-cell flags (ocean_filled, land_corrected) are carried through unchanged.
@@ -13,7 +13,7 @@ of days in each month sourced from Daymet, since a single month can straddle the
 Run AFTER the daily pipeline (build_merged_weather.py -> fill_ocean_cells.py ->
 bias_correct_land.py) is complete.
 
-Output: ../../data/Global Weather/merged_tavg_prcp_1960_2025_monthly.nc
+Output: ../../../data/Global_weather/merged_tavg_prcp_1960_2025_monthly.nc
 """
 import os
 
@@ -21,15 +21,16 @@ import numpy as np
 import xarray as xr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "..", "..", "..", "data", "Global Weather")
-DAILY = os.path.join(DATA, "merged_tavg_prcp_1960_2025.nc")
-OUT = os.path.join(DATA, "merged_tavg_prcp_1960_2025_monthly.nc")
+DAILY_DATA = os.path.join(HERE, "..", "..", "..", "data", "Global Weather")
+OUT_DATA = os.path.join(HERE, "..", "..", "..", "data", "Global_weather")
+DAILY = os.path.join(DAILY_DATA, "merged_tavg_prcp_1960_2025.nc")
+OUT = os.path.join(OUT_DATA, "merged_tavg_prcp_1960_2025_monthly.nc")
 
 
 def monthly_from_daily(ds):
     """Resample a daily merged dataset to calendar months."""
     n_days = ds.tavg.resample(time="MS").count(dim="time").astype(np.int16)
-    tavg_m = ds.tavg.resample(time="MS").mean(dim="time", skipna=True)
+    tavg_m = ds.tavg.resample(time="MS").max(dim="time", skipna=True)
     pr_m = ds.pr.resample(time="MS").sum(dim="time", skipna=True, min_count=1)
     src_m = ds.data_source.astype(np.float32).resample(time="MS").mean(dim="time")
 
@@ -57,9 +58,10 @@ def main():
 
     monthly.tavg.attrs = {
         "standard_name": "air_temperature",
-        "long_name": "Monthly mean surface (2m) air temperature",
+        "long_name": "Monthly maximum daily surface (2m) air temperature",
         "units": "degC",
-        "cell_methods": "time: mean within days time: mean over days",
+        "cell_methods": "time: mean within days time: maximum over days",
+        "comment": "maximum of the daily tavg values (each a daily mean) within the month",
     }
     monthly.pr.attrs = {
         "standard_name": "precipitation_amount",
@@ -76,9 +78,9 @@ def main():
     }
 
     monthly.attrs = dict(ds.attrs)
-    monthly.attrs["title"] = "Monthly mean tavg and total precipitation, PNWNAmet + Daymet v4 R1"
+    monthly.attrs["title"] = "Monthly max tavg and total precipitation, PNWNAmet + Daymet v4 R1"
     monthly.attrs["summary"] = (
-        f"Monthly aggregation of {os.path.basename(DAILY)}: tavg is the monthly mean of "
+        f"Monthly aggregation of {os.path.basename(DAILY)}: tavg is the monthly maximum of "
         "daily values, pr is the monthly total of daily mm/day values. See n_days for the "
         "number of daily observations behind each month."
     )
