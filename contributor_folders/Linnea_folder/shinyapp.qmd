@@ -65,6 +65,7 @@ NAflag(tasmax) <- -3.4e+38
 yr <- tapp(tasmax, format(time(tasmax), "%Y"), fun = mean, na.rm = TRUE)
 names(yr) <- sub("^X", "", names(yr))    # tapp prefixes with X
 
+fine <- focal(fine, w = 5, fun = mean, na.rm = TRUE)
 writeRaster(yr, "~/FishyG/data/Global_weather/tasmax_annual.tif", overwrite = TRUE)
 
 tmax <- rast("~/FishyG/data/Global_weather/tasmax_annual.tif")
@@ -97,6 +98,80 @@ leaflet() %>%
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
+
+```{r}
+
+ui <- fluidPage(
+  leafletOutput("map", height = 600),
+  absolutePanel(
+    bottom = 120, left = 30, width = 250,
+    draggable = TRUE,
+    style = "background: rgba(255,255,255,0.9); padding: 12px;
+             border-radius: 5px; box-shadow: 0 0 8px rgba(0,0,0,0.2);",
+    titlePanel("Site Map"),
+    checkboxGroupInput("model", "Model:",
+                         choices = sort(unique(river_coords$model)),
+                         selected = unique(river_coords$model)),
+    hr(),
+  checkboxInput("show_temp", "Show temperature", TRUE),
+    sliderInput("year", "Year:",
+              min = as.numeric(min(years)),
+              max = as.numeric(max(years)),
+              value = 2012, step = 1, sep = "",
+              animate = animationOptions(interval = 600, loop = TRUE))
+    )
+  )
+
+
+server <- function(input, output, session) {
+  
+  filtered <- reactive({
+    river_coords[river_coords$model %in% input$model, ]
+  })
+  
+  output$map <- renderLeaflet({
+    leaflet() %>% 
+      addProviderTiles(providers$OpenStreetMap, group = "Street") %>%
+    addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
+      addLayersControl(baseGroups = c("Street", "Satellite"),
+                     overlayGroups = c("Temperature", "Sites"),
+                     options = layersControlOptions(collapsed = FALSE))
+    
+  })
+  #addRasterImage(tasmaxraster[[1]], colors = pal_r, opacity = 0.7, group = "tasmax")
+  
+  
+  observe({
+      proxy <- leafletProxy("map") %>% clearGroup("Temperature")
+      req(input$show_temp)
+      
+      idx <- which(years == as.character(input$year))
+      req(length(idx) > 0)
+
+      proxy %>%
+      addRasterImage(tmax[[idx]], colors = pal_t, opacity = 0.6,
+                   group = "Temperature", project = FALSE,
+                   method = "bilinear") 
+      
+  })
+
+  observe({
+      leafletProxy("map", data = filtered()) %>%
+      clearGroup("stream_name_pse") %>%
+      addCircleMarkers(~longitude, ~latitude,
+                   group = "stream_name_pse",
+                   fillColor = ~pal(model),
+                   fillOpacity = 0.9,
+                   stroke = FALSE,
+                   radius = 6,
+                   popup = ~paste0("<b>", stream_name_pse, "</b><br>Model: ", model))
+  })
+  
+}
+
+shinyApp(ui, server)
+```
 
 ```{r}
 
