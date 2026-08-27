@@ -44,7 +44,7 @@ river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_co
 
 tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
-weather <- "~/FishyG/data/Global_weather/merged_tavg_prcp_1960_2025.nc"
+pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1060_2025.nc")
 
 ```
 
@@ -56,8 +56,10 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
-tavg <- rast(weather, subds = "tavg")
-pr <- rast(weather, subds = "pr")
+pr <- rast(pr)
+
+yrs_p <- tapp(, format(time(pr), "%Y"), fun = mean, na.rm = TRUE)
+
 
 yrs_t <- format(time(tavg),   "%Y")
 yrs_p <- format(time(pr),   "%Y")
