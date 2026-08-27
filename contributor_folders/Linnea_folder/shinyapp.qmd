@@ -44,7 +44,9 @@ river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_co
 
 tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
-pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1060_2025.nc")
+#tmax <- rast("~/FishyG/data/Global_weather/t_max_monthly_1960_2025.nc", subds = "tmax")
+
+pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1960_2025.nc", subds = "pr")
 
 ```
 
@@ -56,58 +58,22 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
-pr <- rast(pr)
+tm_pr <- time(pr)
 
-yrs_p <- tapp(, format(time(pr), "%Y"), fun = mean, na.rm = TRUE)
+pr_years  <- as.integer(format(tm_pr, "%Y"))
+pr_months <- as.integer(format(tm_pr, "%m"))
 
-
-yrs_t <- format(time(tavg),   "%Y")
-yrs_p <- format(time(pr),   "%Y")
+pal_p <- colorQuantile("Blues", values(pr), n = 7, na.color = "transparent")
 ```
 
-```{r}
+```{#tm_t <- time(tmax)}
 
-tavg <- rast(weather, subds = "tavg")
-pr <- rast(weather, subds = "pr")
-
-yrs_t <- tapp(tavg, format(time(tavg), "%Y"), fun = mean, na.rm = TRUE)
-yrs_p <- format(time(pr),   "%Y")
-
-```
-
-```{r}
-
-
-NAflag(tasmax) <- -3.4e+38
-
-# annual means: 24837 layers -> 68
-yr <- tapp(tasmax, format(time(tasmax), "%Y"), fun = mean, na.rm = TRUE)
-names(yr) <- sub("^X", "", names(yr))    # tapp prefixes with X
-
-#fine <- focal(fine, w = 5, fun = mean, na.rm = TRUE)
-writeRaster(yr, "~/FishyG/data/Global_weather/tasmax_annual.tif", overwrite = TRUE)
-
-tmax <- rast("~/FishyG/data/Global_weather/tasmax_annual.tif")
-years <- names(tmax)
-
-
+#t_years  <- as.integer(format(tm_t, "%Y"))
+#t_months <- as.integer(format(tm_t, "%m"))
 ```
 
 ```{r}
 pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
-
-pal_t <- colorNumeric("RdYlBu", values(tmax), na.color = "transparent",
-                      reverse = TRUE)
-```
-
-```{r}
-#crs(weather_raster) <- "EPSG:4326"                        # if missing
-#weather_raster <- rotate(weather_raster)                               # if longitudes are 0–360
-#weather_raster <- crop(weather_raster, ext(-135, -120, 47, 56))        # your area only
-#weather_raster <- aggregate(weather_raster, fact = 2)                  # halve resolution
-
-#pal_r <- colorNumeric("YlOrRd", values(weather_raster), na.color = "transparent")
-
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
@@ -126,12 +92,11 @@ ui <- fluidPage(
                          choices = sort(unique(river_coords$model)),
                          selected = unique(river_coords$model)),
     hr(),
-  checkboxInput("show_temp", "Show temperature", TRUE),
-    sliderInput("year", "Year:",
-              min = as.numeric(min(years)),
-              max = as.numeric(max(years)),
-              value = 2012, step = 1, sep = "",
-              animate = animationOptions(interval = 600, loop = TRUE))
+  checkboxInput("show_precip", "Show precipitation", TRUE),
+    sliderInput("date", "Month:",
+            min = min(tm_pr), max = max(tm_pr), value = max(tm_pr),
+            timeFormat = "%b %Y",
+            animate = animationOptions(interval = 400, loop = TRUE))
     )
   )
 
@@ -148,24 +113,25 @@ server <- function(input, output, session) {
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
       fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
       addLayersControl(baseGroups = c("Street", "Satellite"),
-                     overlayGroups = c("Temperature", "Sites"),
+                     overlayGroups = c("Precip", "Sites"),
                      options = layersControlOptions(collapsed = FALSE))
     
   })
-  #addRasterImage(tasmaxraster[[1]], colors = pal_r, opacity = 0.7, group = "tasmax")
-  
   
   observe({
-      proxy <- leafletProxy("map") %>% clearGroup("Temperature")
-      req(input$show_temp)
+      leafletProxy("map") %>% 
+      clearGroup("Precip") %>%
+      clearControls()
+      req(input$show_precip)
       
-      idx <- which(years == as.character(input$year))
+      idx <- which.min(abs(as.numeric(tm_pr) - as.numeric(input$date)))
       req(length(idx) > 0)
+      
+      lyr <- disagg(pr[[idx]], fact = 8, method = "bilinear")
 
-      proxy %>%
-      addRasterImage(tmax[[idx]], colors = pal_t, opacity = 0.6,
-                   group = "Temperature", project = FALSE,
-                   method = "bilinear") 
+      leafletProxy ("map") %>%
+      addRasterImage(lyr, colors = pal_p, opacity = 0.6,
+                   group = "Precip", project = FALSE, method = "bilinear") 
       
   })
 
