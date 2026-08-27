@@ -64,18 +64,25 @@ The `echo: false` option disables the printing of code (only output is displayed
 
 ```{r}
 ui <- fluidPage(
-  titlePanel("Site Map"),
-  sidebarLayout(
-    sidebarPanel(
-      checkboxGroupInput("model", "Model:",
+  leafletOutput("map", height = 600),
+  absolutePanel(
+    bottom = 120, left = 30, width = 250,
+    draggable = TRUE,
+    style = "background: rgba(255,255,255,0.9); padding: 12px;
+             border-radius: 5px; box-shadow: 0 0 8px rgba(0,0,0,0.2);",
+    titlePanel("Site Map"),
+    checkboxGroupInput("model", "Model:",
                          choices = sort(unique(river_coords$model)),
-                         selected = unique(river_coords$model))
-    ),
-    mainPanel(
-      leafletOutput("map", height = 600)
+                         selected = unique(river_coords$model)),
+    sliderInput(inputId = river_coords$year,
+                  min = min(river_coords$year),
+                  max = max(river_coords$year),
+                  value = max(river_coords$year),
+                  label = "Year",
+                  step = 1,
+                  sep = "")
     )
   )
-)
 
 
 server <- function(input, output, session) {
