@@ -48,6 +48,8 @@ describe("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
 tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
+weather <- "~/FishyG/data/Global_weather/merged_tavg_prcp_1960_2025.nc"
+
 ```
 
 ```{r}
@@ -59,17 +61,34 @@ river_coords <- river_coords %>%
 
 ```{r}
 
+tavg <- rast(weather, subds = "tavg")
+pr <- rast(weather, subds = "pr")
+
+yrs_t <- tapp(tavg, format(time(tavg), "%Y"), fun = mean, na.rm = TRUE)
+yrs_p <- format(time(pr),   "%Y")
+
+```
+
+```{r}
+
+
 NAflag(tasmax) <- -3.4e+38
 
 # annual means: 24837 layers -> 68
 yr <- tapp(tasmax, format(time(tasmax), "%Y"), fun = mean, na.rm = TRUE)
 names(yr) <- sub("^X", "", names(yr))    # tapp prefixes with X
 
-fine <- focal(fine, w = 5, fun = mean, na.rm = TRUE)
+#fine <- focal(fine, w = 5, fun = mean, na.rm = TRUE)
 writeRaster(yr, "~/FishyG/data/Global_weather/tasmax_annual.tif", overwrite = TRUE)
 
 tmax <- rast("~/FishyG/data/Global_weather/tasmax_annual.tif")
 years <- names(tmax)
+
+
+```
+
+```{r}
+pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
 
 pal_t <- colorNumeric("RdYlBu", values(tmax), na.color = "transparent",
                       reverse = TRUE)
@@ -83,18 +102,6 @@ pal_t <- colorNumeric("RdYlBu", values(tmax), na.color = "transparent",
 
 #pal_r <- colorNumeric("YlOrRd", values(weather_raster), na.color = "transparent")
 
-```
-
-```{r}
-pal <- colorFactor(c("#1b9e77", "#7570b3", "darkgrey"), domain = river_coords$model)
-
-leaflet() %>%
-  addProviderTiles(providers$OpenStreetMap) %>%
-  addCircleMarkers(data = river_coords, ~longitude, ~latitude,
-                   fillColor = ~pal(model),
-                   fillOpacity = 0.9,
-                   stroke = FALSE,
-                   radius = 6)
 ```
 
 The `echo: false` option disables the printing of code (only output is displayed).
