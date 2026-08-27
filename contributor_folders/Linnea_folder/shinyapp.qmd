@@ -38,10 +38,16 @@ library(gt)
 library(sf)
 library(viridis)
 library(terra)
+library(ncdf4)
+nc <- nc_open("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
+print(nc)
 
 river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_col_types = FALSE)
 
-weather_raster <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
+describe("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
+
+tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
+
 ```
 
 ```{r}
@@ -49,6 +55,33 @@ river_coords <- river_coords %>%
   mutate(model = case_when(
     stream_name_pse %in% c("NANAIMO RIVER", "COWICHAN RIVER", "LITTLE QUALICUM RIVER", "CHEMAINUS RIVER") ~ "Model", TRUE ~"No model"
   ))
+```
+
+```{r}
+
+NAflag(tasmax) <- -3.4e+38
+
+# annual means: 24837 layers -> 68
+yr <- tapp(tasmax, format(time(tasmax), "%Y"), fun = mean, na.rm = TRUE)
+names(yr) <- sub("^X", "", names(yr))    # tapp prefixes with X
+
+writeRaster(yr, "~/FishyG/data/Global_weather/tasmax_annual.tif", overwrite = TRUE)
+
+tmax <- rast("~/FishyG/data/Global_weather/tasmax_annual.tif")
+years <- names(tmax)
+
+pal_t <- colorNumeric("RdYlBu", values(tmax), na.color = "transparent",
+                      reverse = TRUE)
+```
+
+```{r}
+#crs(weather_raster) <- "EPSG:4326"                        # if missing
+#weather_raster <- rotate(weather_raster)                               # if longitudes are 0–360
+#weather_raster <- crop(weather_raster, ext(-135, -120, 47, 56))        # your area only
+#weather_raster <- aggregate(weather_raster, fact = 2)                  # halve resolution
+
+#pal_r <- colorNumeric("YlOrRd", values(weather_raster), na.color = "transparent")
+
 ```
 
 ```{r}
@@ -66,6 +99,7 @@ leaflet() %>%
 The `echo: false` option disables the printing of code (only output is displayed).
 
 ```{r}
+
 ui <- fluidPage(
   leafletOutput("map", height = 600),
   absolutePanel(
@@ -77,13 +111,13 @@ ui <- fluidPage(
     checkboxGroupInput("model", "Model:",
                          choices = sort(unique(river_coords$model)),
                          selected = unique(river_coords$model)),
-    sliderInput(inputId = river_coords$year,
-                  min = min(river_coords$year),
-                  max = max(river_coords$year),
-                  value = max(river_coords$year),
-                  label = "Year",
-                  step = 1,
-                  sep = "")
+    hr(),
+  checkboxInput("show_temp", "Show temperature", TRUE),
+    sliderInput("year", "Year:",
+              min = as.numeric(min(years)),
+              max = as.numeric(max(years)),
+              value = 2012, step = 1, sep = "",
+              animate = animationOptions(interval = 600, loop = TRUE))
     )
   )
 
@@ -96,9 +130,16 @@ server <- function(input, output, session) {
   
   output$map <- renderLeaflet({
     leaflet() %>% 
-      addProviderTiles(providers$OpenStreetMap) %>%
-      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude))
+      addProviderTiles(providers$OpenStreetMap, group = "Street") %>%
+    addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
+      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
+      addLayersControl(baseGroups = c("Street", "Satellite"),
+                     overlayGroups = c("Temperature", "Sites"),
+                     options = layersControlOptions(collapsed = FALSE))
+    
   })
+  #addRasterImage(tasmaxraster[[1]], colors = pal_r, opacity = 0.7, group = "tasmax")
+  
   
   observe({
       leafletProxy("map", data = filtered()) %>%
