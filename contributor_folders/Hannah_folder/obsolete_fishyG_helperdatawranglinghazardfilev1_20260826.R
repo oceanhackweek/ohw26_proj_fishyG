@@ -526,8 +526,7 @@ print(utils::head(hz_chemainus))
 ######################################### Cowichan #########################################
 
 SALMON_URL <- paste0(
-  "https://github.com/oceanhackweek/ohw26_proj_fishyG", 
-  "/blob/717e8ce794b893b458ed9e5f27de7ec15062af90/data/Salmon%20Data/COWICHAN%20RIVER_salmon_data.csv")
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Salmon%20Data/COWICHAN%20RIVER_salmon_data.csv")
 
 FLOW_URL <- paste0(
   "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Cowichan_Riv_Flow.csv")
