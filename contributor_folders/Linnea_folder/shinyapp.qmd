@@ -37,8 +37,11 @@ library(tidycensus)
 library(gt)
 library(sf)
 library(viridis)
+library(terra)
 
 river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_col_types = FALSE)
+
+weather_raster <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 ```
 
 ```{r}
