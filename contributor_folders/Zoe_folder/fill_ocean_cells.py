@@ -197,9 +197,12 @@ def main():
     ds["tavg"].loc[dict(time=tgt.time)] = filled_t
     ds["pr"].loc[dict(time=tgt.time)] = filled_p
 
-    still = int(np.isnan(ds.tavg.values).sum())
-    print(f"Filled {n_before - still} of {n_before} missing tavg values "
+    still = int(np.isnan(ds.sel(time=tgt.time).tavg.values).sum())
+    print(f"Filled {n_before - still} of {n_before} missing tavg values from {FILL_START} "
           f"({still} still NaN)")
+    if still:
+        print("  remaining NaN cells sit outside the PNWNAmet domain, so there is no "
+              "reference to calibrate against; they are NaN for the whole record.")
 
     # per-cell flag: was this cell ever ocean-filled?
     ever = np.zeros((lat.size, lon.size), np.int8)
