@@ -1,0 +1,289 @@
+---
+title: "FishyG — Chinook survey sites with daily weather layers"
+format: html
+editor: visual
+---
+
+Extends `Linnea_folder/shinyapp.qmd`: the same survey-site map and model filter,
+plus daily temperature and precipitation read straight out of
+`data/Global Weather/merged_tavg_prcp_1960_2025.nc`.
+
+The netCDF holds two griddable variables, `tavg` and `pr`. A `SpatRaster` is one
+variable, so `rast()` is called twice with `subds =` rather than once. See
+`HANDOFF.md` for how the file was built.
+
+## Setup
+
+```{r load-packages, echo = FALSE, message = FALSE, warning = FALSE}
+library(shiny)
+library(leaflet)
+library(terra)
+library(readr)
+library(dplyr)
+
+# Only the packages this app actually uses. Linnea's version loads ~25; the rest
+# were unused and each one slows app start.
+
+if (utils::packageVersion("leaflet") < "2.2.0") {
+  warning("leaflet < 2.2.0 cannot draw a SpatRaster directly. ",
+          "Upgrade, or wrap rasters in raster::raster() before addRasterImage().")
+}
+```
+
+```{r paths, echo = FALSE, message = FALSE}
+# Walk up from the working directory until the repo's data/ folder appears, so
+# this runs the same whether it's knitted from Zoe_folder or the repo root.
+repo_root <- local({
+  d <- normalizePath(getwd(), winslash = "/")
+  root <- NA_character_
+  for (i in 1:6) {
+    if (dir.exists(file.path(d, "data", "Global Weather"))) { root <- d; break }
+    d <- dirname(d)
+  }
+  if (is.na(root)) stop("Could not locate the repo's data/ directory from ", getwd())
+  root
+})
+
+# NB: the folder is "Global Weather" - a space and a capital W.
+nc_path  <- file.path(repo_root, "data", "Global Weather",
+                      "merged_tavg_prcp_1960_2025.nc")
+csv_path <- file.path(repo_root, "data", "survey_sites_vancouver_isl.csv")
+```
+
+```{r sites, echo = FALSE, message = FALSE}
+MODELLED <- c("NANAIMO RIVER", "COWICHAN RIVER",
+              "LITTLE QUALICUM RIVER", "CHEMAINUS RIVER")
+
+river_coords <- read_csv(csv_path, show_col_types = FALSE) |>
+  mutate(
+    model = if_else(stream_name_pse %in% MODELLED, "Model", "No model"),
+    # -989898 is the source's missing-data sentinel, not a count.
+    stream_observed_count = na_if(stream_observed_count, -989898)
+  )
+
+site_years <- sort(unique(river_coords$year))
+```
+
+```{r rasters, echo = FALSE, message = FALSE}
+# One SpatRaster per variable. Neither call loads pixels: terra keeps the file
+# on disk and reads a layer only when one is asked for, which is what makes a
+# 24,104-layer daily slider workable.
+tavg_r <- rast(nc_path, subds = "tavg")
+pr_r   <- rast(nc_path, subds = "pr")
+
+# An unset CRS is the usual reason a raster lands in the wrong hemisphere with
+# no error. The file is CF-1.8 with degrees_north/east, so terra normally infers
+# this, but assert it rather than hope.
+if (!nzchar(crs(tavg_r))) crs(tavg_r) <- "EPSG:4326"
+if (!nzchar(crs(pr_r)))   crs(pr_r)   <- "EPSG:4326"
+
+# The dates the app is allowed to show come from the file, never from seq().
+# Daymet uses a 365-day calendar, so 31 December is absent in 2016, 2020 and
+# 2024: there are 24,104 layers where a naive date sequence gives 24,107.
+nc_dates <- as.Date(terra::time(tavg_r), tz = "UTC")
+stopifnot(!anyNA(nc_dates), length(nc_dates) == nlyr(tavg_r))
+
+nc_years <- sort(unique(as.integer(format(nc_dates, "%Y"))))
+
+# Resolve a date to a layer by MATCHING, never by arithmetic. "Days since
+# 1960-01-01, plus one" drifts one layer late after 2016, two after 2020 and
+# three after 2024 - showing plausible weather from the wrong day, silently.
+layer_for <- function(d) {
+  i <- match(as.Date(d), nc_dates)
+  if (is.na(i)) NULL else i
+}
+```
+
+```{r palettes, echo = FALSE, message = FALSE}
+# Domains are fixed across the whole record, so days stay comparable as the
+# slider moves. Measured once over all 24,104 layers rather than recomputed at
+# every app start, which would read ~130 MB.
+TAVG_DOMAIN <- c(-22.7, 32.8)   # degC
+PR_MAX      <- 249.1            # mm/day
+
+# Daily precipitation is zero-inflated (46% of cell-days are under 0.1 mm) and
+# heavily right-skewed (99th percentile 49.5 mm, max 249 mm). A linear ramp to
+# the wettest day on record would render almost every day as the same colour,
+# so bin it on roughly logarithmic breaks instead.
+PR_BREAKS <- c(0, 0.1, 1, 2.5, 5, 10, 20, 35, 50, PR_MAX)
+
+# na.color transparent: five southwest cells lie outside the PNWNAmet domain and
+# are NaN throughout. The default would paint grey squares over open water.
+pal_tavg <- colorNumeric("RdYlBu", domain = TAVG_DOMAIN,
+                         na.color = "transparent", reverse = TRUE)
+pal_pr   <- colorBin("YlGnBu", domain = c(0, PR_MAX), bins = PR_BREAKS,
+                     na.color = "transparent")
+
+pal_model <- colorFactor(c("#1b9e77", "#7570b3"),
+                         domain = c("Model", "No model"))
+
+VAR_GROUPS  <- c("Temperature", "Precipitation")
+SITE_GROUP  <- "Survey sites"
+
+# Fit to the weather grid, not to the sites: the survey data reaches Haida Gwaii
+# and up the mainland coast, while the raster covers eastern Vancouver Island
+# only. Sites outside the grid are still drawn - there is just no weather under
+# them.
+grid_ext <- ext(tavg_r)
+```
+
+## App
+
+```{r app, echo = FALSE}
+ui <- fluidPage(
+  leafletOutput("map", height = 640),
+  absolutePanel(
+    bottom = 60, left = 30, width = 290,
+    draggable = TRUE,
+    style = "background: rgba(255,255,255,0.94); padding: 14px;
+             border-radius: 5px; box-shadow: 0 0 8px rgba(0,0,0,0.25);",
+
+    tags$h4("Site map", style = "margin-top:0"),
+
+    checkboxGroupInput("model", "Model:",
+                       choices  = c("Model", "No model"),
+                       selected = c("Model", "No model")),
+
+    radioButtons("layer", "Weather layer:",
+                 choices  = c("Temperature", "Precipitation"),
+                 selected = "Temperature"),
+
+    selectInput("year", "Year:",
+                choices  = nc_years,
+                selected = 2020),
+
+    # A single slider over all 24,104 days would give about one pixel per 100
+    # days. Scoping it to the selected year keeps it at <= 365 positions, where
+    # dragging is meaningful and the arrow keys move exactly one day.
+    sliderInput("day", "Date:",
+                min   = as.Date("2020-01-01"),
+                max   = as.Date("2020-12-31"),
+                value = as.Date("2020-07-01"),
+                step  = 1, timeFormat = "%d %b %Y",
+                animate = animationOptions(interval = 400, loop = FALSE)),
+
+    checkboxInput("sites_this_year", "Only sites surveyed this year", FALSE),
+
+    tags$p("Weather grid covers eastern Vancouver Island only.",
+           style = "font-size:11px; color:#666; margin-bottom:0")
+  )
+)
+
+server <- function(input, output, session) {
+
+  # Rebuild the day slider from the dates actually present in the chosen year.
+  # This is also what stops 31 Dec 2016/2020/2024 from being selectable: those
+  # days are not in the record, so they never become the slider's max.
+  observeEvent(input$year, {
+    yd <- nc_dates[format(nc_dates, "%Y") == input$year]
+    keep <- if (!is.null(input$day) &&
+                format(input$day, "%Y") == input$year) input$day else yd[1]
+    updateSliderInput(session, "day",
+                      min = min(yd), max = max(yd), value = keep)
+  }, ignoreInit = FALSE)
+
+  # Dragging across a year fires several hundred invalidations where an annual
+  # slider fired one. Redraw when the drag settles instead of at every day.
+  sel_date <- debounce(reactive(req(input$day)), 250)
+
+  sites <- reactive({
+    d <- river_coords[river_coords$model %in% input$model, ]
+    if (isTRUE(input$sites_this_year)) {
+      d <- d[d$year == as.integer(input$year), ]
+    } else {
+      # One marker per stream, not one per stream-year.
+      d <- d[!duplicated(d$stream_name_pse), ]
+    }
+    d
+  })
+
+  output$map <- renderLeaflet({
+    leaflet() |>
+      addProviderTiles(providers$OpenStreetMap) |>
+      fitBounds(xmin(grid_ext), ymin(grid_ext),
+                xmax(grid_ext), ymax(grid_ext)) |>
+      # Sites only. The weather layer is chosen by the radio button instead of
+      # by leaflet baseGroups: a base group added to the control after the fact
+      # is drawn regardless of which radio is lit, so both rasters would stack
+      # until the user toggled - and it would read two layers per frame rather
+      # than one.
+      addLayersControl(
+        overlayGroups = SITE_GROUP,
+        options = layersControlOptions(collapsed = FALSE)
+      )
+  })
+
+  # --- weather layer + its legend -------------------------------------------
+  observe({
+    req(input$layer)
+    d <- sel_date()
+    i <- layer_for(d)
+    # A date with no layer should redraw nothing, not raise. Can only happen if
+    # the slider is driven outside the range set for the year.
+    if (is.null(i)) return()
+
+    p <- leafletProxy("map") |> clearGroup(VAR_GROUPS)
+
+    # Nearest-neighbour: the cells are ~6 km, and bilinear smoothing would imply
+    # more resolution than the data has.
+    # The legend carries a layerId so re-adding replaces it in place. Do NOT use
+    # clearControls() here - it would also delete the layers control added in
+    # renderLeaflet.
+    if (input$layer == "Temperature") {
+      p |>
+        addRasterImage(tavg_r[[i]], colors = pal_tavg, opacity = 0.72,
+                       project = TRUE, method = "ngb", group = "Temperature") |>
+        addLegend("bottomright", pal = pal_tavg, values = TAVG_DOMAIN,
+                  title = "Mean air temp<br/>(&deg;C)", opacity = 0.9,
+                  layerId = "wxlegend")
+    } else {
+      p |>
+        addRasterImage(pr_r[[i]], colors = pal_pr, opacity = 0.72,
+                       project = TRUE, method = "ngb", group = "Precipitation") |>
+        addLegend("bottomright", pal = pal_pr, values = PR_BREAKS,
+                  title = "Precipitation<br/>(mm/day)", opacity = 0.9,
+                  layerId = "wxlegend")
+    }
+  })
+
+  # --- survey sites, drawn after the raster so they sit on top ---------------
+  observe({
+    d <- sites()
+    p <- leafletProxy("map") |> clearGroup(SITE_GROUP)
+    if (nrow(d) == 0) return()
+
+    p |> addCircleMarkers(
+      data = d, lng = ~longitude, lat = ~latitude,
+      group = SITE_GROUP,
+      fillColor = ~pal_model(model), fillOpacity = 0.95,
+      stroke = TRUE, color = "#ffffff", weight = 1, radius = 6,
+      popup = ~paste0("<b>", stream_name_pse, "</b><br/>",
+                      "Model: ", model, "<br/>",
+                      "Year: ", year, "<br/>",
+                      "Chinook counted: ",
+                      ifelse(is.na(stream_observed_count), "not recorded",
+                             format(stream_observed_count, big.mark = ",")))
+    )
+  })
+}
+
+shinyApp(ui, server)
+```
+
+## Notes
+
+- **Daily is weather, not climate.** This answers "what were conditions during
+  this window", not "is this river warming". An annual view is `tapp()` on the
+  same two rasters — worth adding as a second mode rather than replacing this.
+- **The 2013 splice.** PNWNAmet before 2013, Daymet after, bias-corrected to the
+  PNWNAmet baseline. The correction is a monthly-mean adjustment, so it removes
+  systematic bias but not differences in day-to-day variability — which is
+  exactly what a daily view puts on screen. Don't read a change in day-to-day
+  texture across 2013 as a real signal.
+- **Survey years are 1929–2024; the weather record is 1960–2025.** The year
+  selector is driven by the raster, so pre-1960 survey years aren't reachable
+  here.
+- Reads are cheap (~4 ms for both variables) but the *first* one costs ~0.17 s
+  while the netCDF chunk cache fills. If that stall matters, rechunk once with
+  `nccopy -c time/30,lat/19,lon/31 -d 4 -s` — it takes ~2 s and the file gets
+  smaller.
