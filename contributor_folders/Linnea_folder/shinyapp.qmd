@@ -60,6 +60,14 @@ river_coords <- river_coords %>%
 ```
 
 ```{r}
+tavg <- rast(weather, subds = "tavg")
+pr <- rast(weather, subds = "pr")
+
+yrs_t <- format(time(tavg),   "%Y")
+yrs_p <- format(time(pr),   "%Y")
+```
+
+```{r}
 
 tavg <- rast(weather, subds = "tavg")
 pr <- rast(weather, subds = "pr")
