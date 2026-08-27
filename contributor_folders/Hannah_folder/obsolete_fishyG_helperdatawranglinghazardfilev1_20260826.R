@@ -13,6 +13,24 @@
 ##
 ## Base R only.
 ## ---------------------------------------------------------------------------
+## ---------------------------------------------------------------------------
+##
+## year |	integer	Calendar year, from ANALYSIS_YR
+## date |		Date	The day this row describes
+## doy	 |	1–366	Day of year; carries baseline seasonal timing
+## days_at_risk	 |	days	Days elapsed since start_doy; 1 on the first row of each year
+## arrived	 |	0 / 1	Target. 1 on the arrival day, 0 on every prior day
+## flow	 |	m³/s	Daily mean discharge that day
+## flow_7d / _14d / _30d	m³/s	 |	Mean discharge over today plus the previous 6 / 13 / 29 days
+## flow_delta_14d	 |	m³/s	flow_7d − flow_14d. Positive means flow is rising
+## flow_cum_since_start	 |	m³/s·day	Running sum of daily mean discharge since start_doy
+## days_since_high_flow	 |	days	Days since discharge last hit the high_flow_q threshold. Resets each calendar year; NA before the first crossing
+## jan_jun_mean_flow	m³/s	 |	Mean discharge Jan 1–Jun 30 that year. One value repeated down the year; NA if fewer than min_jan_jun_days observed
+## n_missing_flow	 |	days	Count of NA flow days in that year's window. A data-quality flag, not a predictor
+## start_doy is the day of year each year's at-risk window opens — the first day the model treats as a day 
+#     salmon could arrive. It defaults to 152, which is June 1. Also Where flow_cum_since_start starts accumulating. 
+#     The cumulative-discharge feature resets to zero on start_doy each year, so moving it changes that predictor's values, not just the row count.
+#     For now, choose to keep start_doy as 152, but could adjust to 200 if decide to change?
 
 SALMON_URL <- paste0(
   "https://raw.githubusercontent.com/oceanhackweek/ohw26_proj_fishyG/",
@@ -462,9 +480,132 @@ if (sys.nframe() == 0) {
       " arrivals:", sum(hz$arrived), "\n")
   print(utils::head(hz))
   
-  # library(ranger)
-  # fit <- ranger(factor(arrived) ~ doy + flow_7d + flow_14d + flow_30d +
-  #                 flow_delta_14d + flow_cum_since_start +
-  #                 days_since_high_flow + jan_jun_mean_flow,
-  #               data = hz, probability = TRUE, num.trees = 1000)
 }
+
+################################################################################################
+## Actually make the hazard files for 
+## 1. Chemainus
+## 2. Cowichan
+## 3. LilQualicum
+## 4. Nanaimo
+## Name each output (the hz file as hz_river)
+################################################################################################
+
+
+######################################### Chemainus ######################################### 
+SALMON_URL <- paste0(
+  "https://raw.githubusercontent.com/oceanhackweek/ohw26_proj_fishyG/",
+  "76c0f7785620e3f0f42571b73357cbce4e2ea0a0/data/Salmon%20Data/",
+  "CHEMAINUS%20RIVER_salmon_data.csv")
+
+FLOW_URL <- paste0(
+  "https://raw.githubusercontent.com/oceanhackweek/ohw26_proj_fishyG/",
+  "76c0f7785620e3f0f42571b73357cbce4e2ea0a0/data/Chemanius_Riv_Flow.csv")
+
+
+## 1. look at the salmon file before filtering anything
+salmon_raw <- read.csv(SALMON_URL, stringsAsFactors = FALSE)
+print(table(salmon_raw$SPECIES, salmon_raw$RUN_TYPE))
+print(range(salmon_raw$ANALYSIS_YR, na.rm = TRUE))
+
+## 2. read both sources
+salmon <- read_salmon()   # arrival from time_return; check the printed guess
+flow   <- read_flow()
+
+## 3. CHECK COVERAGE BEFORE MODELLING -- do not skip this
+cov <- check_coverage(salmon, flow)
+print(cov)
+cat("years with any missing flow:", sum(cov$missing_flow > 0), "of", nrow(cov), "\n")
+
+## 4. build
+hz_chemainus <- build_hazard_data(salmon, flow)
+cat("\nrows:", nrow(hz_chemainus), " years:", length(unique(hz_chemainus$year)),
+    " arrivals:", sum(hz_chemainus$arrived), "\n")
+print(utils::head(hz_chemainus))
+
+######################################### Cowichan #########################################
+
+SALMON_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Salmon%20Data/COWICHAN%20RIVER_salmon_data.csv")
+
+FLOW_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Cowichan_Riv_Flow.csv")
+
+
+## 1. look at the salmon file before filtering anything
+salmon_raw <- read.csv(SALMON_URL, stringsAsFactors = FALSE)
+print(table(salmon_raw$SPECIES, salmon_raw$RUN_TYPE))
+print(range(salmon_raw$ANALYSIS_YR, na.rm = TRUE))
+
+## 2. read both sources
+salmon <- read_salmon()   # arrival from time_return; check the printed guess
+flow   <- read_flow()
+
+## 3. CHECK COVERAGE BEFORE MODELLING -- do not skip this
+cov <- check_coverage(salmon, flow)
+print(cov)
+cat("years with any missing flow:", sum(cov$missing_flow > 0), "of", nrow(cov), "\n")
+
+## 4. build
+hz_cowichan <- build_hazard_data(salmon, flow)
+cat("\nrows:", nrow(hz_cowichan), " years:", length(unique(hz_cowichan$year)),
+    " arrivals:", sum(hz_cowichan$arrived), "\n")
+print(utils::head(hz_cowichan))
+
+######################################### LilQualicum #########################################
+
+SALMON_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/",
+  "717e8ce794b893b458ed9e5f27de7ec15062af90/data/Salmon%20Data/LITTLE%20QUALICUM%20RIVER_salmon_data.csv")
+
+FLOW_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/LilQualicum_Riv_Flow.csv")
+
+## 1. look at the salmon file before filtering anything
+salmon_raw <- read.csv(SALMON_URL, stringsAsFactors = FALSE)
+print(table(salmon_raw$SPECIES, salmon_raw$RUN_TYPE))
+print(range(salmon_raw$ANALYSIS_YR, na.rm = TRUE))
+
+## 2. read both sources
+salmon <- read_salmon()   # arrival from time_return; check the printed guess
+flow   <- read_flow()
+
+## 3. CHECK COVERAGE BEFORE MODELLING -- do not skip this
+cov <- check_coverage(salmon, flow)
+print(cov)
+cat("years with any missing flow:", sum(cov$missing_flow > 0), "of", nrow(cov), "\n")
+
+## 4. build
+hz_lilqualicum <- build_hazard_data(salmon, flow)
+cat("\nrows:", nrow(hz_lilqualicum), " years:", length(unique(hz_lilqualicum$year)),
+    " arrivals:", sum(hz_lilqualicum$arrived), "\n")
+print(utils::head(hz_lilqualicum))
+
+######################################### Nanaimo #########################################
+
+SALMON_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/",
+  "blob/717e8ce794b893b458ed9e5f27de7ec15062af90/data/Salmon%20Data/NANAIMO%20RIVER_salmon_data.csv")
+
+FLOW_URL <- paste0(
+  "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Nanaimo_Riv_Flow.csv")
+
+## 1. look at the salmon file before filtering anything
+salmon_raw <- read.csv(SALMON_URL, stringsAsFactors = FALSE)
+print(table(salmon_raw$SPECIES, salmon_raw$RUN_TYPE))
+print(range(salmon_raw$ANALYSIS_YR, na.rm = TRUE))
+
+## 2. read both sources
+salmon <- read_salmon()   # arrival from time_return; check the printed guess
+flow   <- read_flow()
+
+## 3. CHECK COVERAGE BEFORE MODELLING -- do not skip this
+cov <- check_coverage(salmon, flow)
+print(cov)
+cat("years with any missing flow:", sum(cov$missing_flow > 0), "of", nrow(cov), "\n")
+
+## 4. build
+hz_nanaimo <- build_hazard_data(salmon, flow)
+cat("\nrows:", nrow(hz_nanaimo), " years:", length(unique(hz_nanaimo$year)),
+    " arrivals:", sum(hz_nanaimo$arrived), "\n")
+print(utils::head(hz_nanaimo))
