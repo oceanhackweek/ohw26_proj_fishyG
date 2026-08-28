@@ -39,6 +39,7 @@ library(sf)
 library(viridis)
 library(terra)
 library(ncdf4)
+library(patchwork)
 
 river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_col_types = FALSE)
 
@@ -47,6 +48,9 @@ tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 tmax <- rast("~/FishyG/data/Global_weather/t_max_monthly_1960_2025.nc", subds = "t_max")
 
 pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1960_2025.nc", subds = "pr")
+
+nan_plot <- readRDS("~/FishyG/data/yearplotsforsalmonstreams/nan_plot.rds")
+nan_plot
 
 ```
 
@@ -101,7 +105,8 @@ ui <- fluidPage(
              selected = "pr"),
   sliderInput("idx", "Month:", min = 1, max = length(tm_pr),
             value = length(tm_pr), step = 1,
-            animate = animationOptions(interval = 1200, loop = TRUE)) 
+            animate = animationOptions(interval = 1200, loop = TRUE)),
+  plotOutput("site_plot", height = 400)
     )
   )
 
@@ -161,6 +166,10 @@ server <- function(input, output, session) {
                    layerId = ~stream_name_pse,
                    popup = ~paste0("<b>", stream_name_pse, "</b><br>Model: ", model))
   })
+  
+  output$site_plot <- renderPlot({
+  nan_plot
+})
   
 }
 
