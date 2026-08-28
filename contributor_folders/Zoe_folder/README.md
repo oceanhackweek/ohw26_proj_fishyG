@@ -22,7 +22,7 @@ Pinned to what's currently verified working (Python 3.14.6). See
 | `outputs/` | Metrics, plots, and the pickled model for whichever site is currently configured in `src/config.py`. |
 | `outputs_by_site/<site>/` | Snapshots of `outputs/` (plus its own `data/interim`+`processed`) saved off per site after a run, so results for multiple sites can coexist. |
 | `figures/` | Standalone plots (e.g. `jul_aug_temp_precip_maps.png` from `src/plot_jul_aug_maps.py`). |
-| `handoff/` | `HANDOFF.md` (how the weather `.nc` was built) and `R_HANDOFF.md` (the R/Shiny weather-layer app) — read these before touching either pipeline. |
+| `handoff/` | `HANDOFF.md` (how the weather `.nc` was built) — read before touching the weather pipeline. |
 | `notebooks/` | Currently empty. |
 
 ## Running the salmon-spawning pipeline
@@ -75,9 +75,7 @@ daily merged output above; run after it, not before.
 
 ## Known gaps
 
-- `contributor_folders/Zoe_folder/shinyapp_weather.qmd` (R/Shiny weather
-  layers) has never been executed — see `handoff/R_HANDOFF.md` §0 and its
-  first-run checklist before trusting it.
-- This folder (`src/`, `data/`, `outputs/`, `outputs_by_site/`) was untracked
-  in git as of 2026-08-27; confirm it's committed before relying on a fresh
-  clone to have it.
+- The weather-pipeline notebook's caveats section quotes measured splice-step
+  and bias figures (e.g. the 2013 land/ocean temperature step, the monthly
+  precip ratios). If the pipeline is ever re-run against updated source data,
+  those numbers will drift and the notebook should be re-run to refresh them.

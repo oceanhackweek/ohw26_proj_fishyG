@@ -55,3 +55,19 @@ SEASON_START_MONTH_DAY = (8, 1)   # Aug 1
 SEASON_END_MONTH_DAY = (12, 15)   # Dec 15
 
 FEATURE_COLUMNS = ["Q_7", "Q_pulse", "Q_rising", "P", "P_7", "T", "T_trend7"]
+
+# Cross-validation strategy for src/model.py -- per-site, because the four
+# sites' usable-year records aren't uniform. Chemainus and Cowichan have a
+# long-enough, reasonably continuous record for a causal rolling-origin
+# evaluation. Nanaimo and Little Qualicum each have a real multi-year hole
+# splitting their usable years into two disjoint eras (Little Qualicum's
+# 1987-2012 discharge gap; Nanaimo's ~1995-2002 survey gap) -- leave-one-YEAR-
+# out would still let the model train on other years from the SAME era as the
+# held-out year, so leave-one-ERA-out is the harder, honest question there.
+#   "loyo"              -- leave-one-year-out (unused by any site currently).
+#   "logo_era"          -- leave-one-era-out block CV; see model.era_blocks.
+#   "forward_chaining"  -- expanding-window rolling-origin CV; see
+#                          model.forward_chaining_predict.
+CV_METHOD = "forward_chaining"
+ERA_GAP_YEARS = 5       # only used when CV_METHOD == "logo_era"
+MIN_TRAIN_YEARS = 5     # only used when CV_METHOD == "forward_chaining"
