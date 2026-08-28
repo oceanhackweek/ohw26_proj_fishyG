@@ -40,18 +40,32 @@ library(viridis)
 library(terra)
 library(ncdf4)
 library(patchwork)
+library(leaflet.providers)
 
 river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_col_types = FALSE)
-
-tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
 tmax <- rast("~/FishyG/data/Global_weather/t_max_monthly_1960_2025.nc", subds = "t_max")
 
 pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1960_2025.nc", subds = "pr")
 
 nan_plot <- readRDS("~/FishyG/data/yearplotsforsalmonstreams/nan_plot.rds")
-nan_plot
 
+pr_s   <- disagg(pr,   fact = 8, method = "bilinear")
+tmax_s <- disagg(tmax, fact = 8, method = "bilinear")
+
+```
+
+```{r}
+plot_list <- list(
+  "NANAIMO RIVER"         = readRDS("~/FishyG/data/yearplotsforsalmonstreams/nan_plot.rds"),
+  "CHEMAINUS RIVER"       = readRDS("~/FishyG/data/yearplotsforsalmonstreams/chem_plot.rds"),
+  "COWICHAN RIVER"        = readRDS("~/FishyG/data/yearplotsforsalmonstreams/cow_plot.rds"),
+  "LITTLE QUALICUM RIVER" = readRDS("~/FishyG/data/yearplotsforsalmonstreams/lilq_plot.rds")
+)
+
+saveRDS(plot_list, "site_plots.rds")
+
+plot_list <- readRDS("site_plots.rds")
 ```
 
 ```{r}
@@ -70,7 +84,6 @@ preds$month_name <- factor(preds$month_name, levels = c("Aug", "Sep", "Oct"))
 preds$site_key <- toupper(trimws(preds$site))
 ```
 
-
 ```{r}
 tm_pr <- time(pr)
 
@@ -78,6 +91,7 @@ pr_years  <- as.integer(format(tm_pr, "%Y"))
 pr_months <- as.integer(format(tm_pr, "%m"))
 
 pal_p <- colorQuantile("Blues", values(pr), n = 7, na.color = "transparent")
+
 ```
 
 ```{r}
@@ -86,92 +100,128 @@ pal_t <- colorBin("RdYlBu", domain = values(tmax), bins = 8,
 ```
 
 ```{r}
+# ============ UI ============
+
 ui <- fluidPage(
-  leafletOutput("map", height = 600),
-  absolutePanel(
-    bottom = 120, left = 30, width = 250,
-    draggable = TRUE,
-    style = "background: rgba(255,255,255,0.9); padding: 12px;
-             border-radius: 5px; box-shadow: 0 0 8px rgba(0,0,0,0.2);",
-    titlePanel("Site Map"),
-    checkboxGroupInput("model", "Model:",
+  fluidRow(
+    column(5,
+      h4("Site Map"),
+      checkboxGroupInput("model", "Model:",
                          choices = sort(unique(river_coords$model)),
                          selected = unique(river_coords$model)),
-    hr(),
-  radioButtons("layer", "Climate layer:",
-             choices = c("None" = "none",
-                         "Mean precipitation" = "pr",
-                         "Max temperature" = "tmax"),
-             selected = "pr"),
-  sliderInput("idx", "Month:", min = 1, max = length(tm_pr),
-            value = length(tm_pr), step = 1,
-            animate = animationOptions(interval = 1200, loop = TRUE)),
-  plotOutput("site_plot", height = 400)
+      radioButtons("layer", "Climate layer:",
+                   choices = c("None" = "none",
+                               "Mean precipitation" = "pr",
+                               "Max temperature" = "tmax"),
+                   selected = "pr"),
+      sliderInput("idx", "Month:", min = 1, max = length(tm_pr),
+                  value = length(tm_pr), step = 1, width = "100%",
+                  animate = animationOptions(interval = 1200, loop = TRUE)),
+      strong(textOutput("month_label", inline = TRUE)),
+      hr(),
+      h4(textOutput("site_name")),
+      plotOutput("site_plot", height = 800)
+    ),
+    column(7,
+      leafletOutput("map", height = 750)
     )
   )
+)
 
-pr_s   <- disagg(pr, fact = 8, method = "bilinear")
-tmax_s <- disagg(tmax, fact = 8, method = "bilinear")
+
+# ============ SERVER ============
 
 server <- function(input, output, session) {
-  
+
+  selected_site <- reactiveVal(NULL)
+
+  observeEvent(input$map_marker_click, {
+    selected_site(input$map_marker_click$id)
+  })
+
   filtered <- reactive({
     river_coords[river_coords$model %in% input$model, ]
   })
-  
-  output$map <- renderLeaflet({
-    leaflet() %>% 
-      addProviderTiles(providers$OpenStreetMap, group = "Street") %>%
-    addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
-      fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
+
+  output$month_label <- renderText(format(tm_pr[input$idx], "%B %Y"))
+
+  output$site_name <- renderText({
+    if (is.null(selected_site())) "Click a site" else selected_site()
+  })
+
+  # ---- base map ----
+    output$map <- renderLeaflet({
+    leaflet() %>%
+      addTiles(group = "Street") %>%
+      fitBounds(min(river_coords$longitude), min(river_coords$latitude),
+                max(river_coords$longitude), max(river_coords$latitude)) %>%
       addLayersControl(baseGroups = c("Street", "Satellite"),
-                     options = layersControlOptions(collapsed = TRUE))
-    
+                       options = layersControlOptions(collapsed = TRUE))
   })
+    session$onFlushed(function() {
+  leafletProxy("map") %>%
+    fitBounds(min(river_coords$longitude), min(river_coords$latitude),
+              max(river_coords$longitude), max(river_coords$latitude))
+}, once = TRUE)
   
-  observe({
-      leafletProxy("map") %>% 
-      clearGroup("Climate") %>%
-      clearControls()
-      req(input$layer != "none")
-      
-      idx <- input$idx
-      req(!is.null(idx))
-      
-       if (input$layer == "pr") {
-    r <- pr[[idx]]; p <- pal_p; stack_vals <- values(pr); unit <- "mm/month"
-  } else {
-    r <- tmax[[idx]]; p <- pal_t; stack_vals <- values(tmax); unit <- "°C"
-  }
-      
-      lyr <- disagg(r, fact = 8, method = "bilinear")
 
-      leafletProxy("map") %>%
-    addRasterImage(lyr, colors = p, opacity = 0.85,
-                   group = "Climate", project = FALSE, method = "bilinear") %>%
-    addLegend("bottomright", pal = p, values = stack_vals,
-              title = paste0(format(tm_pr[idx], "%B %Y"), "<br>(", unit, ")"))
-      
+  # ---- climate raster ----
+  observe({
+    leafletProxy("map") %>% clearGroup("Climate")
+    req(input$layer != "none")
+
+    idx <- input$idx
+    req(!is.null(idx))
+
+    if (input$layer == "pr") {
+      r <- pr_s[[idx]];   p <- pal_p; stack_vals <- values(pr);   unit <- "mm/month"
+    } else {
+      r <- tmax_s[[idx]]; p <- pal_t; stack_vals <- values(tmax); unit <- "\u00B0C"
+    }
+
+    leafletProxy("map") %>%
+      addRasterImage(r, colors = p, opacity = 0.85,
+                     group = "Climate", project = FALSE, method = "bilinear") %>%
+      addLegend("bottomright", pal = p, values = stack_vals,
+                layerId = "climate_legend",
+                title = paste0(format(tm_pr[idx], "%B %Y"), "<br>(", unit, ")"))
   })
 
+  # ---- site markers, redrawn after the raster so they stay on top ----
   observe({
-      leafletProxy("map", data = filtered()) %>%
-      clearGroup("stream_name_pse") %>%
+    input$idx; input$layer
+    req(nrow(filtered()) > 0)
+    leafletProxy("map", data = filtered()) %>%
+      clearGroup("Sites") %>%
       addCircleMarkers(~longitude, ~latitude,
-                   group = "stream_name_pse",
-                   fillColor = ~pal(model),
-                   fillOpacity = 0.9,
-                   stroke = FALSE,
-                   radius = 6,
-                   layerId = ~stream_name_pse,
-                   popup = ~paste0("<b>", stream_name_pse, "</b><br>Model: ", model))
+                       group = "Sites",
+                       layerId = ~stream_name_pse,
+                       fillColor = ~pal(model),
+                       fillOpacity = 0.9, stroke = FALSE, radius = 6,
+                       label = ~stream_name_pse,
+                       popup = ~paste0("<b>", stream_name_pse,
+                                       "</b><br>Model: ", model))
   })
-  
+
+  # ---- highlight ring on the clicked site ----
+  observeEvent(input$map_marker_click, {
+    click <- input$map_marker_click
+    leafletProxy("map") %>%
+      clearGroup("selected") %>%
+      addCircleMarkers(lng = click$lng, lat = click$lat, group = "selected",
+                       radius = 11, color = "black", weight = 3,
+                       fillOpacity = 0)
+  })
+
+  # ---- saved plot for the clicked site ----
   output$site_plot <- renderPlot({
-  nan_plot
-})
-  
+    req(selected_site())
+    p <- plot_list[[selected_site()]]
+    validate(need(!is.null(p), "No plot for this site"))
+    p & theme(text = element_text(size = 13))
+  }, res = 96)
 }
 
 shinyApp(ui, server)
 ```
+
