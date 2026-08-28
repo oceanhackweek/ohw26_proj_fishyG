@@ -112,8 +112,7 @@ server <- function(input, output, session) {
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
       fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
       addLayersControl(baseGroups = c("Street", "Satellite"),
-                     overlayGroups = c("Climate", "Sites"),
-                     options = layersControlOptions(collapsed = FALSE))
+                     options = layersControlOptions(collapsed = TRUE))
     
   })
   
