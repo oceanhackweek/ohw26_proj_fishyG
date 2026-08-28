@@ -11,7 +11,7 @@ an Earthdata Login. Credentials are read from ~/.netrc:
 
 Register free at https://urs.earthdata.nasa.gov/users/new
 
-Output: ../../data/Global Weather/merged_tavg_prcp_1960_2025.nc  (vars: tavg, pr)
+Output: ../../data/Global_weather/merged_tavg_prcp_1960_2025.nc  (vars: tavg, pr)
 """
 import os
 import sys
@@ -24,7 +24,7 @@ from pyproj import CRS, Transformer
 from scipy import sparse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "..", "..", "data", "Global Weather")
+DATA = os.path.join(HERE, "..", "..", "..", "data", "Global_weather")
 CACHE = os.path.join(HERE, "cache", "daymet")
 OUT = os.path.join(DATA, "merged_tavg_prcp_1960_2025.nc")
 

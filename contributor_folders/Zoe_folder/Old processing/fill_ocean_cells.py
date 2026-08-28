@@ -26,7 +26,7 @@ from scipy import sparse
 from scipy.spatial import Delaunay
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DATA = os.path.join(HERE, "..", "..", "data", "Global Weather")
+DATA = os.path.join(HERE, "..", "..", "..", "data", "Global_weather")
 CACHE = os.path.join(HERE, "cache", "narr")
 MERGED = os.path.join(DATA, "merged_tavg_prcp_1960_2025.nc")
 

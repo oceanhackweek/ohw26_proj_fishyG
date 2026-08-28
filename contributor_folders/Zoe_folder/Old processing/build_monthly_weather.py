@@ -21,10 +21,9 @@ import numpy as np
 import xarray as xr
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-DAILY_DATA = os.path.join(HERE, "..", "..", "..", "data", "Global Weather")
-OUT_DATA = os.path.join(HERE, "..", "..", "..", "data", "Global_weather")
-DAILY = os.path.join(DAILY_DATA, "merged_tavg_prcp_1960_2025.nc")
-OUT = os.path.join(OUT_DATA, "merged_tavg_prcp_1960_2025_monthly.nc")
+DATA = os.path.join(HERE, "..", "..", "..", "data", "Global_weather")
+DAILY = os.path.join(DATA, "merged_tavg_prcp_1960_2025.nc")
+OUT = os.path.join(DATA, "merged_tavg_prcp_1960_2025_monthly.nc")
 
 
 def monthly_from_daily(ds):

@@ -1,0 +1,27 @@
+# Python environment for contributor_folders/Zoe_folder
+#
+# Covers both the weather-data pipeline in `Old processing/` (PNWNAmet +
+# Daymet + NARR splice, bias correction) and the salmon-spawning model
+# pipeline in `src/` (load -> features -> target -> model).
+#
+# Install with:
+#   python -m pip install -r requirements.txt
+#
+# Versions below are pinned to what is currently installed and verified
+# working in this environment (Python 3.14.6). Loosen the pins if you need
+# to resolve alongside other packages, but re-run the pipeline end to end
+# after doing so -- xarray/pandas/numpy major-version bumps have changed
+# default behaviors before (e.g. join semantics, parquet engines).
+
+numpy==2.5.2
+pandas==3.0.5
+xarray==2025.9.0
+netCDF4==1.7.4
+scipy==1.18.0
+scikit-learn==1.9.0
+matplotlib==3.11.1
+Cartopy==0.25.0
+pyproj==3.7.2
+geopandas==1.1.4
+pyarrow==22.0.0
+requests==2.34.2
