@@ -60,6 +60,14 @@ pal <- colorFactor("Dark2", domain = river_coords$model)
 ```
 
 ```{r}
+preds <- read.csv("~/FishyG/model_output/monthly_predictions_dashboard.csv", stringsAsFactors = FALSE)
+preds$month_name <- factor(preds$month_name, levels = c("Aug", "Sep", "Oct"))
+
+preds$site_key <- toupper(trimws(preds$site))
+```
+
+
+```{r}
 tm_pr <- time(pr)
 
 pr_years  <- as.integer(format(tm_pr, "%Y"))
