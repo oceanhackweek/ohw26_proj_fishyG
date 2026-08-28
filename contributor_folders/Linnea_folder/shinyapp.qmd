@@ -189,7 +189,6 @@ server <- function(input, output, session) {
 
   # ---- site markers, redrawn after the raster so they stay on top ----
   observe({
-    input$idx; input$layer
     req(nrow(filtered()) > 0)
     leafletProxy("map", data = filtered()) %>%
       clearGroup("Sites") %>%
