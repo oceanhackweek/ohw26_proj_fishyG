@@ -57,10 +57,10 @@ tmax_s <- disagg(tmax, fact = 8, method = "bilinear")
 
 ```{r}
 plot_list <- list(
-  "NANAIMO RIVER"         = readRDS("~/FishyG/data/yearplotsforsalmonstreams/nan_plot.rds"),
-  "CHEMAINUS RIVER"       = readRDS("~/FishyG/data/yearplotsforsalmonstreams/chem_plot.rds"),
-  "COWICHAN RIVER"        = readRDS("~/FishyG/data/yearplotsforsalmonstreams/cow_plot.rds"),
-  "LITTLE QUALICUM RIVER" = readRDS("~/FishyG/data/yearplotsforsalmonstreams/lilq_plot.rds")
+  "NANAIMO RIVER"         = readRDS("~/FishyG/data/yearplotsforsalmonstreams/nan_obsvpred.rds"),
+  "CHEMAINUS RIVER"       = readRDS("~/FishyG/data/yearplotsforsalmonstreams/chem_obsvpred.rds"),
+  "COWICHAN RIVER"        = readRDS("~/FishyG/data/yearplotsforsalmonstreams/cow_obsvpred.rds"),
+  "LITTLE QUALICUM RIVER" = readRDS("~/FishyG/data/yearplotsforsalmonstreams/lilq_obsvpred.rds")
 )
 
 saveRDS(plot_list, "site_plots.rds")
@@ -214,11 +214,11 @@ server <- function(input, output, session) {
 
   # ---- saved plot for the clicked site ----
   output$site_plot <- renderPlot({
-    req(selected_site())
-    p <- plot_list[[selected_site()]]
-    validate(need(!is.null(p), "No plot for this site"))
-    p & theme(text = element_text(size = 13))
-  }, res = 96)
+  req(selected_site())
+  p <- plot_list[[selected_site()]]
+  validate(need(!is.null(p), "No plot for this site"))
+  p
+}, res = 96)
 }
 
 shinyApp(ui, server)
