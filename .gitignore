@@ -3,5 +3,7 @@
 **/.DS_Store
 .Rproj.user
 *.nc
+*.pkl
+*.parquet
 __pycache__/
 cache/
