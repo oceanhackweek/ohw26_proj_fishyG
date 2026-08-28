@@ -26,17 +26,17 @@ OUTPUTS_DIR = ZOE_ROOT / "outputs"
 # single record (44 usable years, cleanest season-window coverage) -- as the
 # "live" default. Swap the four lines below to switch sites and re-run
 # load.py -> features.py -> target.py -> model.py.
-FLOW_CSV = RAW_DATA_DIR / "Chemanius_Riv_Flow.csv"
-SALMON_CSV = RAW_DATA_DIR / "Salmon Data" / "CHEMAINUS RIVER_salmon_data.csv"
+FLOW_CSV = RAW_DATA_DIR / "Nanaimo_Riv_Flow.csv"
+SALMON_CSV = RAW_DATA_DIR / "Salmon Data" / "NANAIMO RIVER_salmon_data.csv"
 WEATHER_NC = RAW_DATA_DIR / "Global_weather" / "merged_tavg_prcp_1960_2025.nc"
 
-SITE_NAME = "Chemainus River"
+SITE_NAME = "Nanaimo River"
 # From data/river_coordinates.csv
-SITE_LAT = 48.8972
-SITE_LON = -123.6797
+SITE_LAT = 49.1309
+SITE_LON = -123.8945
 
-# Flow gauge station 08HA001 (WSC).
-FLOW_STATION_ID = "08HA001"
+# Flow gauge station 08HB034 (WSC).
+FLOW_STATION_ID = "08HB034"
 
 # Physical plausibility bounds (see plan section 1.4)
 Q_MIN = 0.0
@@ -68,6 +68,6 @@ FEATURE_COLUMNS = ["Q_7", "Q_pulse", "Q_rising", "P", "P_7", "T", "T_trend7"]
 #   "logo_era"          -- leave-one-era-out block CV; see model.era_blocks.
 #   "forward_chaining"  -- expanding-window rolling-origin CV; see
 #                          model.forward_chaining_predict.
-CV_METHOD = "forward_chaining"
+CV_METHOD = "logo_era"
 ERA_GAP_YEARS = 5       # only used when CV_METHOD == "logo_era"
 MIN_TRAIN_YEARS = 5     # only used when CV_METHOD == "forward_chaining"
