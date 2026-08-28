@@ -1,0 +1,170 @@
+---
+title: "fishyG_plotsalmonforshiny_20260828"
+output: html_document
+date: "2026-08-28"
+---
+
+Libraries
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+install.packages("patchwork")
+library(patchwork)
+```
+
+need this? unsure
+```{r}
+STREAMS <- data.frame(stream = c("COWICHAN RIVER", "CHEMAINUS RIVER", "LILQUALICUM RIVER", "NANAIMO RIVER"), salmon_url = c("https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/fb5467aafebe8ce24a997c6e2d98bc2636ad769d/data/Salmon%20Data/COWICHAN%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/CHEMAINUS%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/LITTLE%20QUALICUM%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/NANAIMO%20RIVER_salmon_data.csv"))
+```
+
+```{r}
+path <- "/home/jovyan/Desktop/fishyG/data/Salmon Data/"
+setwd(path)
+
+read.csv("CHEMAINUS RIVER_salmon_data.csv") -> chemainus
+read.csv('COWICHAN RIVER_salmon_data.csv') -> cowichan
+read.csv('LITTLE QUALICUM RIVER_salmon_data.csv') -> lilqualicum
+read.csv('NANAIMO RIVER_salmon_data.csv') -> nanaimo
+```
+
+Parse doy & plot
+```{r}
+df <- chemainus #repro
+d <- df %>%
+  mutate(
+    time_return   = ymd_hms(time_return, truncated = 3),   # swap for dmy()/mdy() if needed
+    return_yr     = year(time_return),
+    return_doy    = yday(time_return),
+    return_doy_adj = return_doy - (leap_year(return_yr) & return_doy > 59),
+  )
+
+####Do some plotting
+
+# Day of arrival vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, return_doy_adj)) +
+  geom_point() +
+    theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Year", y = "Arrival day of year",
+       title = "Chemainus R. — Chinook Fall first arrival timing") -> chemainus_doyp )
+# Escapement vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
+  geom_point() +
+     theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Year", y = "Total return to river",
+       title = "Chemainus R. — Chinook Fall escapement") -> chemainus_esp )
+
+chemainus_doyp + chemainus_esp -> chem_p
+saveRDS(chem_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/chem_plot.rds")
+```
+
+Do cowichan
+```{r}
+df <- cowichan #repro
+d <- df %>%
+  mutate(
+    time_return   = ymd_hms(time_return, truncated = 3),   # swap for dmy()/mdy() if needed
+    return_yr     = year(time_return),
+    return_doy    = yday(time_return),
+    return_doy_adj = return_doy - (leap_year(return_yr) & return_doy > 59),
+  )
+
+####Do some plotting
+
+# Day of arrival vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, return_doy_adj)) +
+  geom_point() +
+    theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Year", y = "Arrival day of year",
+       title = "Cowichan R. — Chinook Fall first arrival timing") -> cow_doyp )
+# Escapement vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
+  geom_point() +
+     theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Year", y = "Total return to river",
+       title = "Cowichan R. — Chinook Fall escapement") -> cow_esp )
+
+cow_doyp + cow_esp -> cow_p
+saveRDS(cow_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/cow_plot.rds")
+```
+
+Do LilQual
+```{r}
+df <- lilqualicum #repro
+d <- df %>%
+  mutate(
+    time_return   = ymd_hms(time_return, truncated = 3),   # swap for dmy()/mdy() if needed
+    return_yr     = year(time_return),
+    return_doy    = yday(time_return),
+    return_doy_adj = return_doy - (leap_year(return_yr) & return_doy > 59),
+  )
+
+####Do some plotting
+
+# Day of arrival vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, return_doy_adj)) +
+  geom_point() +
+    theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Year", y = "Arrival day of year",
+       title = "Lil Qualicum R. — Chinook Fall first arrival timing") -> lilq_doyp )
+# Escapement vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
+  geom_point() +
+     theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Year", y = "Total return to river",
+       title = "Lil Qualicum R. — Chinook Fall escapement") -> lilq_esp )
+
+lilq_doyp + lilq_esp -> lilq_p
+saveRDS(lilq_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/lilq_plot.rds")
+```
+
+Do Nanaimo
+```{r}
+df <- nanaimo #repro
+d <- df %>%
+  mutate(
+    time_return   = ymd_hms(time_return, truncated = 3),   # swap for dmy()/mdy() if needed
+    return_yr     = year(time_return),
+    return_doy    = yday(time_return),
+    return_doy_adj = return_doy - (leap_year(return_yr) & return_doy > 59),
+  )
+
+####Do some plotting
+
+# Day of arrival vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, return_doy_adj)) +
+  geom_point() +
+    theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  labs(x = "Year", y = "Arrival day of year",
+       title = "Nanaimo R. — Chinook Fall first arrival timing") -> nan_doyp )
+# Escapement vs year
+( d %>%
+  ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
+  geom_point() +
+     theme_bw()+
+  #geom_smooth(method = "lm", se = TRUE) +
+  scale_y_continuous(labels = scales::comma) +
+  labs(x = "Year", y = "Total return to river",
+       title = "Nanaimo R. — Chinook Fall escapement") -> nan_esp )
+
+nan_doyp + nan_esp -> nan_p
+saveRDS(nan_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/nan_plot.rds")
+```
+
