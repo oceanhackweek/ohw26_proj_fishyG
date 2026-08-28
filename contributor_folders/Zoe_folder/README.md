@@ -25,6 +25,31 @@ Pinned to what's currently verified working (Python 3.14.6). See
 | `handoff/` | `HANDOFF.md` (how the weather `.nc` was built) — read before touching the weather pipeline. |
 | `notebooks/` | Currently empty. |
 
+## Data sources
+
+**River flow** — Water Survey of Canada historical hydrometric data
+(https://wateroffice.ec.gc.ca/map/index_e.html?type=historical), one gauge
+station per site (matches `config.FLOW_STATION_ID`):
+
+| Site | Station ID | Station name |
+|---|---|---|
+| Nanaimo River | 08HB034 | NANAIMO RIVER NEAR CASSIDY |
+| Little Qualicum River | 08HB029 | LITTLE QUALICUM RIVER NEAR QUALICUM BEACH |
+| Chemainus River | 08HA001 | CHEMAINUS RIVER NEAR WESTHOLME |
+| Cowichan River | 08HA011 | COWICHAN RIVER NEAR DUNCAN |
+
+**Trend data** — freshwater life-cycle timing of Pacific salmon and steelhead
+(*Oncorhynchus* spp.) in Canada. Data source:
+https://datadryad.org/dataset/doi:10.5061/dryad.wm37pvmwx
+
+**Salmon river arrival data** — fall Chinook runs, one dataset per site (the
+`SALMON_CSV` per-site constant in `config.py`).
+
+**"Global" weather** — gridded observations behind the shared `.nc` files
+(see `Old processing/` and `handoff/HANDOFF.md`). Paper:
+https://www.mdpi.com/2306-5338/13/2/52. Data source:
+https://services.pacificclimate.org/portal/gridded_observations/map/
+
 ## Running the salmon-spawning pipeline
 
 The pipeline is scoped to **one site at a time**, selected by editing
@@ -46,9 +71,15 @@ After a run, copy `outputs/` and `data/{interim,processed}/` into
 keep that site's results before running the next site.
 
 Notes baked into the code (see each file's docstring for why):
-- Splits are **leave-one-year-out** (`GroupKFold` on `year`), never random
-  k-fold — adjacent days within a season are near-identical, so random folds
-  leak and inflate scores (`model.py`).
+- Splits are always group-respecting, never random k-fold — adjacent days
+  within a season are near-identical, so random folds leak and inflate
+  scores. Which grouping is used is set per site by `config.CV_METHOD`
+  (`model.py`): **forward-chaining** (expanding-window rolling-origin CV) for
+  Chemainus/Cowichan, whose usable years are long and reasonably continuous;
+  **leave-one-era-out** block CV (`model.era_blocks`) for Nanaimo/Little
+  Qualicum, whose usable years each split into two disjoint eras around a
+  real multi-year gap — leave-one-year-out would still let those two sites'
+  models train on other years from the *same* era as the held-out year.
 - Features are computed on the full continuous daily record *before* seasonal
   subsetting, so trailing 7/14-day windows have lookback into the prior
   season (`features.py`).

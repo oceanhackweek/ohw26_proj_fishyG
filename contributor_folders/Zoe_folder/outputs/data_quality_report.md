@@ -1,10 +1,25 @@
-# Data quality report — Nanaimo River
+# Data quality report — Chemainus River
 
 ## flow (Q)
-- raw record: 21767 rows, 1965-05-29 to 2024-12-31
+- raw record: 40776 rows, 1914-05-13 to 2025-12-31
 - gaps inserted by reindexing to a complete daily calendar: 0 day(s) across 0 range(s)
 - implausible values flagged and set to NaN — negative_Q: 0
-- implausible values flagged and set to NaN — Q_gt_50x_median: 0
+- implausible values flagged and set to NaN — Q_gt_50x_median: 2
+- gaps longer than 2 days left as NaN (14 range(s)):
+  - 1917-04-01 to 1952-11-30 (13028 days)
+  - 1954-04-01 to 1954-06-30 (91 days)
+  - 1972-01-01 to 1972-01-10 (10 days)
+  - 1972-01-12 to 1972-02-23 (43 days)
+  - 1972-02-25 to 1972-03-05 (10 days)
+  - 1972-03-07 to 1972-04-25 (50 days)
+  - 1972-04-27 to 1972-06-08 (43 days)
+  - 1972-06-10 to 1972-08-08 (60 days)
+  - 1972-08-10 to 1972-09-14 (36 days)
+  - 1972-09-16 to 1972-11-05 (51 days)
+  - 1973-11-09 to 1973-11-14 (6 days)
+  - 1973-11-29 to 1973-12-27 (29 days)
+  - 1974-01-08 to 1974-01-30 (23 days)
+  - 1974-11-01 to 1974-12-19 (49 days)
 
 ## temperature (T, tavg)
 - raw record: 24104 rows, 1960-01-01 to 2025-12-31
@@ -23,23 +38,21 @@
 - implausible values flagged and set to NaN — negative_P: 0
 
 ## Overlap across environmental series
-- 1965-05-29 to 2024-12-31
+- 1960-01-01 to 2025-12-31
 
 ## Spawning record
-- 30 spawning-count rows, years 1979–2024
+- 46 spawning-count rows, years 1962–2024
 
 ## Usable record (binding constraint on everything downstream)
-- **usable years: 30**
-- **usable spawning events: 30** (one arrival per usable year)
-- years: [1979, 1984, 1986, 1987, 1988, 1989, 1990, 1993, 1994, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2024]
+- **usable years: 46**
+- **usable spawning events: 46** (one arrival per usable year)
+- years: [1962, 1967, 1968, 1969, 1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1999, 2002, 2004, 2005, 2006, 2007, 2008, 2009, 2011, 2015, 2018, 2020, 2022, 2023, 2024]
 
 ## Target construction
-- retained years: 26 / 30
-- retained years list: [np.int64(1984), np.int64(1987), np.int64(1988), np.int64(1989), np.int64(1990), np.int64(1994), np.int64(2003), np.int64(2004), np.int64(2005), np.int64(2006), np.int64(2007), np.int64(2008), np.int64(2009), np.int64(2010), np.int64(2011), np.int64(2012), np.int64(2013), np.int64(2014), np.int64(2015), np.int64(2016), np.int64(2018), np.int64(2019), np.int64(2020), np.int64(2021), np.int64(2022), np.int64(2024)]
-- total rows: 887, positive rows: 26
+- retained years: 44 / 46
+- retained years list: [np.int64(1962), np.int64(1967), np.int64(1968), np.int64(1969), np.int64(1970), np.int64(1971), np.int64(1973), np.int64(1974), np.int64(1975), np.int64(1976), np.int64(1977), np.int64(1978), np.int64(1979), np.int64(1980), np.int64(1981), np.int64(1982), np.int64(1983), np.int64(1984), np.int64(1985), np.int64(1986), np.int64(1987), np.int64(1988), np.int64(1989), np.int64(1990), np.int64(1991), np.int64(1992), np.int64(1994), np.int64(1995), np.int64(1996), np.int64(1999), np.int64(2002), np.int64(2004), np.int64(2005), np.int64(2006), np.int64(2007), np.int64(2008), np.int64(2009), np.int64(2011), np.int64(2015), np.int64(2018), np.int64(2020), np.int64(2022), np.int64(2023), np.int64(2024)]
+- total rows: 1736, positive rows: 44
 
-### Years dropped at target-construction stage (4)
-- 1979: arrival 1979-03-01 falls outside season window [1979-08-01, 1979-12-15]
-- 1986: arrival 1986-07-25 falls outside season window [1986-08-01, 1986-12-15]
-- 1993: arrival 1993-01-04 falls outside season window [1993-08-01, 1993-12-15]
-- 2017: arrival 2018-02-21 falls outside season window [2017-08-01, 2017-12-15]
+### Years dropped at target-construction stage (2)
+- 1972: 33 day(s) in [1972-08-01, 1972-09-02] have NaN feature(s)
+- 1993: arrival 1993-07-18 falls outside season window [1993-08-01, 1993-12-15]

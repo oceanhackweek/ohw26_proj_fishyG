@@ -1,17 +1,17 @@
-site,run,average_precision,roc_auc,median_abs_timing_error_days
-Chemainus,env_only,0.03387019663929697,0.5202020202020202,9.0
-Chemainus,env_plus_doy,0.0425764922020201,0.5718756716097141,6.5
-Chemainus,doy_only,0.05384005210574718,0.690522243713733,8.0
-Chemainus,baseline,,,15.0
-Nanaimo,env_only,0.039079543693426866,0.6363798802823193,7.5
-Nanaimo,env_plus_doy,0.08014700148508973,0.813544179397838,4.0
-Nanaimo,doy_only,0.117360080213155,0.7485705351559011,1.0
-Nanaimo,baseline,,,6.0
-Cowichan,env_only,0.07598235614868322,0.7200522047170691,7.0
-Cowichan,env_plus_doy,0.1496313698011231,0.9168453435256828,1.0
-Cowichan,doy_only,0.12694214394118788,0.835788198005034,2.0
-Cowichan,baseline,,,4.0
-Little Qualicum,env_only,0.04925498408777654,0.6081118783566994,7.0
-Little Qualicum,env_plus_doy,0.05961858192288555,0.759712631652368,5.0
-Little Qualicum,doy_only,0.07982934475724568,0.8051370579619166,10.0
-Little Qualicum,baseline,,,9.0
+site,cv_method,run,average_precision,roc_auc,median_abs_timing_error_days
+Chemainus,forward_chaining,env_only,0.03421656978227225,0.542880896123217,12.0
+Chemainus,forward_chaining,env_plus_doy,0.04374047651282038,0.5890259910737726,7.0
+Chemainus,forward_chaining,doy_only,0.056525283150638664,0.6857705434497243,8.0
+Chemainus,forward_chaining,baseline,,,14.0
+Nanaimo,logo_era,env_only,0.04717520835618518,0.6308853747878138,10.5
+Nanaimo,logo_era,env_plus_doy,0.0721131930791005,0.7300544983471814,4.0
+Nanaimo,logo_era,doy_only,0.07486319764363403,0.7241802912534621,9.0
+Nanaimo,logo_era,baseline,,,7.0
+Cowichan,forward_chaining,env_only,0.07508787153994913,0.6349294729027468,5.0
+Cowichan,forward_chaining,env_plus_doy,0.13986861081432686,0.8817743132887899,2.0
+Cowichan,forward_chaining,doy_only,0.15056770518695745,0.878155159613957,1.5
+Cowichan,forward_chaining,baseline,,,3.0
+Little Qualicum,logo_era,env_only,0.0623887808018099,0.6699623352165724,5.0
+Little Qualicum,logo_era,env_plus_doy,0.062379460717844025,0.671915323986887,3.0
+Little Qualicum,logo_era,doy_only,0.04287114736696362,0.6583141521936249,6.0
+Little Qualicum,logo_era,baseline,,,17.0

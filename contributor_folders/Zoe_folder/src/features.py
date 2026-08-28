@@ -77,14 +77,14 @@ def feature_correlation_report(df: pd.DataFrame, out_path):
 
 
 if __name__ == "__main__":
-    from config import INTERIM_DIR, OUTPUTS_DIR
+    from config import FIGURES_DIR, INTERIM_DIR, SITE_SLUG
 
     env_df = pd.read_parquet(INTERIM_DIR / "daily_env.parquet")
     feat_df = add_features(env_df)
     feat_df.to_parquet(INTERIM_DIR / "daily_features.parquet", index=False)
 
-    OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
-    corr, flagged, p_q_corr = feature_correlation_report(feat_df, OUTPUTS_DIR / "feature_corr.png")
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
+    corr, flagged, p_q_corr = feature_correlation_report(feat_df, FIGURES_DIR / f"{SITE_SLUG}_feature_corr.png")
     print(corr.round(2))
     print(f"\nP_7 vs Q_7 correlation: {p_q_corr:.3f}")
     if flagged:

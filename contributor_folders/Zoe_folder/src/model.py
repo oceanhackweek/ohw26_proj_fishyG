@@ -51,10 +51,12 @@ from config import (
     CV_METHOD,
     ERA_GAP_YEARS,
     FEATURE_COLUMNS,
+    FIGURES_DIR,
     MIN_TRAIN_YEARS,
     OUTPUTS_DIR,
     PROCESSED_DIR,
     SEED,
+    SITE_SLUG,
 )
 
 RUNS = {
@@ -329,6 +331,7 @@ def plot_permutation_importance(imp_df: pd.DataFrame, out_path):
 def main():
     df = pd.read_parquet(PROCESSED_DIR / "features.parquet")
     OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
 
     cv_method = CV_METHOD
     groups = None
@@ -410,11 +413,11 @@ def main():
         "logo_era": "Leave-one-era-out timing error by model",
         "forward_chaining": "Forward-chaining (expanding-window) timing error by model",
     }[cv_method]
-    plot_timing_errors(results, baseline, OUTPUTS_DIR / "timing_errors.png", title)
+    plot_timing_errors(results, baseline, FIGURES_DIR / f"{SITE_SLUG}_timing_errors.png", title)
 
     imp_df = held_out_permutation_importance(df, FEATURE_COLUMNS, results["env_only"]["fold_models"])
     imp_df.to_csv(OUTPUTS_DIR / "permutation_importance.csv", index=False)
-    plot_permutation_importance(imp_df, OUTPUTS_DIR / "permutation_importance.png")
+    plot_permutation_importance(imp_df, FIGURES_DIR / f"{SITE_SLUG}_permutation_importance.png")
     print("\nPermutation importance (env_only, held-out folds):")
     print(imp_df.to_string(index=False))
 

@@ -1,4 +1,4 @@
-"""Cross-river comparison of the LOYO salmon-arrival model.
+"""Cross-river comparison of the salmon-arrival model.
 
 Turns the four already-fitted per-river runs (outputs_by_site/<site>_data) into
 two comparison figures plus a machine-readable metrics table, so the
@@ -6,9 +6,14 @@ day-of-year-dominance pattern documented in outputs_by_site/SUMMARY.md is
 visible across rivers at a glance rather than read row-by-row from four
 separate metrics.md files.
 
-Reuses model.py's RUNS / run_one / baseline_timing_errors so these numbers are
-guaranteed to match the existing per-site metrics.md files (same CV code, same
-SEED), not a parallel reimplementation.
+Each site uses its own CV strategy (see config.py's CV_METHOD comment for why
+they differ): forward-chaining for Chemainus/Cowichan (long, mostly
+continuous records -- "could this have been predicted at the time" is
+meaningful), leave-one-era-out for Nanaimo/Little Qualicum (each has a real
+multi-year hole splitting usable years into two disjoint eras). Reuses
+model.py's RUNS / run_one / era_blocks / baseline_* functions directly so
+these numbers are guaranteed to match the existing per-site metrics.md files
+(same CV code, same SEED), not a parallel reimplementation.
 
 Run:
     cd contributor_folders/Zoe_folder
@@ -23,14 +28,22 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from config import ZOE_ROOT
-from model import RUNS, baseline_timing_errors, run_one
+from config import ERA_GAP_YEARS, FIGURES_DIR, MIN_TRAIN_YEARS, ZOE_ROOT
+from model import (
+    RUNS,
+    baseline_timing_errors,
+    baseline_timing_errors_block,
+    baseline_timing_errors_forward,
+    era_blocks,
+    run_one,
+)
 
+# site -> (outputs_by_site subdir, CV strategy for that site)
 SITES = {
-    "Chemainus": "chemainus_data",
-    "Nanaimo": "nanaimo_data",
-    "Cowichan": "cowichan_data",
-    "Little Qualicum": "little_qualicum_data",
+    "Chemainus": ("chemainus_data", "forward_chaining"),
+    "Nanaimo": ("nanaimo_data", "logo_era"),
+    "Cowichan": ("cowichan_data", "forward_chaining"),
+    "Little Qualicum": ("little_qualicum_data", "logo_era"),
 }
 
 RUN_ORDER = ["env_only", "env_plus_doy", "doy_only"]
@@ -45,22 +58,38 @@ OUT_DIR = ZOE_ROOT / "outputs_by_site"
 
 
 def compute_all() -> dict:
-    """LOYO CV for every (site, run) pair.
+    """Per-site cross-validated evaluation for every (site, run) pair, using
+    each site's own CV strategy (see SITES above).
 
-    Returns {site: {"df": DataFrame, "runs": {run_name: run_one(...) dict}, "baseline": DataFrame}}.
+    Returns {site: {"df": DataFrame, "runs": {run_name: run_one(...) dict}, "baseline": DataFrame, "cv_method": str}}.
     `df` is kept alongside the fitted results (each run's oof_proba is aligned to
     df's row order) so downstream consumers can re-derive per-day predictions
     without re-fitting.
     """
     all_results = {}
-    for site, dirname in SITES.items():
+    for site, (dirname, cv_method) in SITES.items():
         path = OUT_DIR / dirname / "processed" / "features.parquet"
         df = pd.read_parquet(path)
-        runs = {name: run_one(df, name, cols) for name, cols in RUNS.items()}
-        baseline = baseline_timing_errors(df)
-        all_results[site] = {"df": df, "runs": runs, "baseline": baseline}
 
-        print(f"{site}: n_years={df['year'].nunique()}")
+        groups = None
+        if cv_method == "logo_era":
+            groups, _ = era_blocks(df["year"].to_numpy(), ERA_GAP_YEARS)
+
+        runs = {
+            name: run_one(df, name, cols, cv_method=cv_method, groups=groups, min_train_years=MIN_TRAIN_YEARS)
+            for name, cols in RUNS.items()
+        }
+
+        if cv_method == "logo_era":
+            baseline = baseline_timing_errors_block(df, groups)
+        elif cv_method == "forward_chaining":
+            baseline = baseline_timing_errors_forward(df, MIN_TRAIN_YEARS)
+        else:
+            baseline = baseline_timing_errors(df)
+
+        all_results[site] = {"df": df, "runs": runs, "baseline": baseline, "cv_method": cv_method}
+
+        print(f"{site} ({cv_method}): n_years={df['year'].nunique()}")
         for name in RUN_ORDER:
             r = runs[name]
             med = r["timing"]["error_days"].abs().median()
@@ -78,6 +107,7 @@ def write_metrics_csv(all_results: dict, out_path) -> None:
             rows.append(
                 {
                     "site": site,
+                    "cv_method": data["cv_method"],
                     "run": name,
                     "average_precision": r["average_precision"],
                     "roc_auc": r["roc_auc"],
@@ -87,6 +117,7 @@ def write_metrics_csv(all_results: dict, out_path) -> None:
         rows.append(
             {
                 "site": site,
+                "cv_method": data["cv_method"],
                 "run": "baseline",
                 "average_precision": np.nan,
                 "roc_auc": np.nan,
@@ -135,7 +166,11 @@ def plot_summary_bars(all_results: dict, out_path) -> None:
 
     handles, labels = axes[2].get_legend_handles_labels()
     fig.legend(handles, labels, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.05))
-    fig.suptitle("LOYO CV comparison across four rivers", fontsize=13)
+    fig.suptitle(
+        "Cross-validated comparison across four rivers\n"
+        "(forward-chaining: Chemainus, Cowichan · leave-one-era-out: Nanaimo, Little Qualicum)",
+        fontsize=13,
+    )
     fig.tight_layout(rect=[0, 0.06, 1, 1])
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -165,13 +200,13 @@ def plot_timing_boxplots(all_results: dict, out_path) -> None:
             patch.set_alpha(0.6)
         ax.axhline(0, color="grey", linewidth=1, linestyle="--")
         ax.set_ylim(ymin - pad, ymax + pad)
-        ax.set_title(site)
+        ax.set_title(f"{site} ({all_results[site]['cv_method']})")
         ax.tick_params(axis="x", labelrotation=15)
 
     for ax in axes[:, 0]:
         ax.set_ylabel("predicted − actual arrival (days)")
 
-    fig.suptitle("Leave-one-year-out timing error by river and model", fontsize=13)
+    fig.suptitle("Timing error by river and model (each river's own CV strategy)", fontsize=13)
     fig.tight_layout(rect=[0, 0, 1, 0.96])
     fig.savefig(out_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
@@ -180,9 +215,10 @@ def plot_timing_boxplots(all_results: dict, out_path) -> None:
 
 def main():
     all_results = compute_all()
+    FIGURES_DIR.mkdir(parents=True, exist_ok=True)
     write_metrics_csv(all_results, OUT_DIR / "cross_site_metrics.csv")
-    plot_summary_bars(all_results, OUT_DIR / "cross_site_summary.png")
-    plot_timing_boxplots(all_results, OUT_DIR / "cross_site_timing_boxplots.png")
+    plot_summary_bars(all_results, FIGURES_DIR / "cross_site_summary.png")
+    plot_timing_boxplots(all_results, FIGURES_DIR / "cross_site_timing_boxplots.png")
 
 
 if __name__ == "__main__":

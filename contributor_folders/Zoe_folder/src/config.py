@@ -1,7 +1,8 @@
 """Shared constants for the salmon spawning pipeline.
 
-Scope: one site only (Little Qualicum River). Multi-site extension is out of
-scope for this phase — see the project plan.
+Scope: one site at a time -- swap the per-site constants below (FLOW_CSV,
+SALMON_CSV, SITE_NAME, SITE_LAT/LON, FLOW_STATION_ID, SITE_SLUG, CV_METHOD)
+and re-run load.py -> features.py -> target.py -> model.py to switch sites.
 """
 from pathlib import Path
 
@@ -20,23 +21,31 @@ INTERIM_DIR = ZOE_ROOT / "data" / "interim"
 PROCESSED_DIR = ZOE_ROOT / "data" / "processed"
 OUTPUTS_DIR = ZOE_ROOT / "outputs"
 
+# All plots (feature correlation, timing errors, permutation importance) go
+# here rather than into OUTPUTS_DIR / outputs_by_site, so every site's
+# figures live in one place instead of being scattered across four
+# subdirectories. Filenames are prefixed with SITE_SLUG (below) so they don't
+# collide between sites.
+FIGURES_DIR = ZOE_ROOT / "figures"
+
 # Four sites were run this phase; each site's full output is preserved under
 # ../outputs_by_site/<site>/ (see ../outputs_by_site/SUMMARY.md for the
 # cross-site comparison). This config is set to Chemainus -- the strongest
 # single record (44 usable years, cleanest season-window coverage) -- as the
 # "live" default. Swap the four lines below to switch sites and re-run
 # load.py -> features.py -> target.py -> model.py.
-FLOW_CSV = RAW_DATA_DIR / "Nanaimo_Riv_Flow.csv"
-SALMON_CSV = RAW_DATA_DIR / "Salmon Data" / "NANAIMO RIVER_salmon_data.csv"
+FLOW_CSV = RAW_DATA_DIR / "Chemanius_Riv_Flow.csv"
+SALMON_CSV = RAW_DATA_DIR / "Salmon Data" / "CHEMAINUS RIVER_salmon_data.csv"
 WEATHER_NC = RAW_DATA_DIR / "Global_weather" / "merged_tavg_prcp_1960_2025.nc"
 
-SITE_NAME = "Nanaimo River"
+SITE_NAME = "Chemainus River"
+SITE_SLUG = "chemainus"  # used as a filename prefix under FIGURES_DIR
 # From data/river_coordinates.csv
-SITE_LAT = 49.1309
-SITE_LON = -123.8945
+SITE_LAT = 48.8972
+SITE_LON = -123.6797
 
-# Flow gauge station 08HB034 (WSC).
-FLOW_STATION_ID = "08HB034"
+# Flow gauge station 08HA001 (WSC).
+FLOW_STATION_ID = "08HA001"
 
 # Physical plausibility bounds (see plan section 1.4)
 Q_MIN = 0.0
@@ -68,6 +77,6 @@ FEATURE_COLUMNS = ["Q_7", "Q_pulse", "Q_rising", "P", "P_7", "T", "T_trend7"]
 #   "logo_era"          -- leave-one-era-out block CV; see model.era_blocks.
 #   "forward_chaining"  -- expanding-window rolling-origin CV; see
 #                          model.forward_chaining_predict.
-CV_METHOD = "logo_era"
+CV_METHOD = "forward_chaining"
 ERA_GAP_YEARS = 5       # only used when CV_METHOD == "logo_era"
 MIN_TRAIN_YEARS = 5     # only used when CV_METHOD == "forward_chaining"
