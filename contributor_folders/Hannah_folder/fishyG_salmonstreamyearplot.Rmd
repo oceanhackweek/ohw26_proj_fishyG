@@ -48,7 +48,7 @@ d <- df %>%
     theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   labs(x = "Year", y = "Arrival day of year",
-       title = "Chemainus R. — Chinook Fall first arrival timing") -> chemainus_doyp )
+       title = "Chemainus R. — Chinook Fall first arrival timing & escapement") -> chemainus_doyp )
 # Escapement vs year
 ( d %>%
   ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
@@ -56,8 +56,7 @@ d <- df %>%
      theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   scale_y_continuous(labels = scales::comma) +
-  labs(x = "Year", y = "Total return to river",
-       title = "Chemainus R. — Chinook Fall escapement") -> chemainus_esp )
+  labs(x = "Year", y = "Total return to river") -> chemainus_esp )
 
 chemainus_doyp + chemainus_esp -> chem_p
 saveRDS(chem_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/chem_plot.rds")
@@ -83,7 +82,7 @@ d <- df %>%
     theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   labs(x = "Year", y = "Arrival day of year",
-       title = "Cowichan R. — Chinook Fall first arrival timing") -> cow_doyp )
+       title = "Cowichan R. — Chinook Fall first arrival timing & escapement") -> cow_doyp )
 # Escapement vs year
 ( d %>%
   ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
@@ -91,8 +90,7 @@ d <- df %>%
      theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   scale_y_continuous(labels = scales::comma) +
-  labs(x = "Year", y = "Total return to river",
-       title = "Cowichan R. — Chinook Fall escapement") -> cow_esp )
+  labs(x = "Year", y = "Total return to river") -> cow_esp )
 
 cow_doyp + cow_esp -> cow_p
 saveRDS(cow_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/cow_plot.rds")
@@ -118,7 +116,7 @@ d <- df %>%
     theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   labs(x = "Year", y = "Arrival day of year",
-       title = "Lil Qualicum R. — Chinook Fall first arrival timing") -> lilq_doyp )
+       title = "Lil Qualicum R. — Chinook Fall first arrival timing & escapement") -> lilq_doyp )
 # Escapement vs year
 ( d %>%
   ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
@@ -126,8 +124,7 @@ d <- df %>%
      theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   scale_y_continuous(labels = scales::comma) +
-  labs(x = "Year", y = "Total return to river",
-       title = "Lil Qualicum R. — Chinook Fall escapement") -> lilq_esp )
+  labs(x = "Year", y = "Total return to river") -> lilq_esp )
 
 lilq_doyp + lilq_esp -> lilq_p
 saveRDS(lilq_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/lilq_plot.rds")
@@ -153,7 +150,7 @@ d <- df %>%
     theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   labs(x = "Year", y = "Arrival day of year",
-       title = "Nanaimo R. — Chinook Fall first arrival timing") -> nan_doyp )
+       title = "Nanaimo R. — Chinook Fall first arrival timing & escapement") -> nan_doyp )
 # Escapement vs year
 ( d %>%
   ggplot(aes(ANALYSIS_YR, TOTAL_RETURN_TO_RIVER)) +
@@ -161,8 +158,7 @@ d <- df %>%
      theme_bw()+
   #geom_smooth(method = "lm", se = TRUE) +
   scale_y_continuous(labels = scales::comma) +
-  labs(x = "Year", y = "Total return to river",
-       title = "Nanaimo R. — Chinook Fall escapement") -> nan_esp )
+  labs(x = "Year", y = "Total return to river") -> nan_esp )
 
 nan_doyp + nan_esp -> nan_p
 saveRDS(nan_p, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/nan_plot.rds")
