@@ -44,7 +44,7 @@ river_coords <- read_csv("~/FishyG/data/survey_sites_vancouver_isl.csv", show_co
 
 tasmax <- rast("~/FishyG/data/Global_weather/PNWNamet_tasmax.nc.nc")
 
-#tmax <- rast("~/FishyG/data/Global_weather/t_max_monthly_1960_2025.nc", subds = "tmax")
+tmax <- rast("~/FishyG/data/Global_weather/t_max_monthly_1960_2025.nc", subds = "t_max")
 
 pr <- rast("~/FishyG/data/Global_weather/monthly_prcp_1960_2025.nc", subds = "pr")
 
@@ -68,6 +68,10 @@ pr_months <- as.integer(format(tm_pr, "%m"))
 pal_p <- colorQuantile("Blues", values(pr), n = 7, na.color = "transparent")
 ```
 
+```{r}
+pal_t <- colorBin("RdYlBu", domain = values(tmax), bins = 8,
+                  na.color = "transparent", reverse = TRUE)
+```
 
 ```{r}
 ui <- fluidPage(
@@ -82,7 +86,11 @@ ui <- fluidPage(
                          choices = sort(unique(river_coords$model)),
                          selected = unique(river_coords$model)),
     hr(),
-  checkboxInput("show_precip", "Show precipitation", TRUE),
+  radioButtons("layer", "Climate layer:",
+             choices = c("None" = "none",
+                         "Mean precipitation" = "pr",
+                         "Max temperature" = "tmax"),
+             selected = "pr"),
     sliderInput("date", "Month:",
             min = min(tm_pr), max = max(tm_pr), value = max(tm_pr),
             timeFormat = "%b %Y",
@@ -103,25 +111,33 @@ server <- function(input, output, session) {
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
       fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
       addLayersControl(baseGroups = c("Street", "Satellite"),
-                     overlayGroups = c("Precip", "Sites"),
+                     overlayGroups = c("Climate", "Sites"),
                      options = layersControlOptions(collapsed = FALSE))
     
   })
   
   observe({
       leafletProxy("map") %>% 
-      clearGroup("Precip") %>%
+      clearGroup("Climate") %>%
       clearControls()
-      req(input$show_precip)
+      req(input$layer != "none")
       
       idx <- which.min(abs(as.numeric(tm_pr) - as.numeric(input$date)))
-      req(length(idx) > 0)
+      req(length(idx) == 1)
       
-      lyr <- disagg(pr[[idx]], fact = 8, method = "bilinear")
+       if (input$layer == "pr") {
+    r <- pr[[idx]]; p <- pal_p; stack_vals <- values(pr); unit <- "mm/month"
+  } else {
+    r <- tmax[[idx]]; p <- pal_t; stack_vals <- values(tmax); unit <- "°C"
+  }
+      
+      lyr <- disagg(r, fact = 8, method = "bilinear")
 
-      leafletProxy ("map") %>%
-      addRasterImage(lyr, colors = pal_p, opacity = 0.6,
-                   group = "Precip", project = FALSE, method = "bilinear") 
+      leafletProxy("map") %>%
+    addRasterImage(lyr, colors = p, opacity = 0.85,
+                   group = "Climate", project = FALSE, method = "bilinear") %>%
+    addLegend("bottomright", pal = p, values = stack_vals,
+              title = paste0(format(tm_pr[idx], "%B %Y"), "<br>(", unit, ")"))
       
   })
 
