@@ -2,8 +2,10 @@
 
 Same pipeline (`src/load.py` -> `features.py` -> `target.py` -> `model.py`), same config
 (SEED=42, Aug 1-Dec 15 season window, RF hyperparameters fixed per the plan), run once
-per site. Each site's full output (data quality report, metrics, plots, pickled model)
-is in its own subdirectory here.
+per site. Each site's data quality report, metrics, and pickled model are in its own
+subdirectory here; **plots are not** -- they all live in `../figures/`, prefixed by site
+(`chemainus_*`, `cowichan_*`, `nanaimo_*`, `little_qualicum_*`, plus `cross_site_*` for
+the two comparison figures below), so every site's figures are in one place.
 
 **CV strategy differs by site** (set via `src/config.py`'s `CV_METHOD`, see that file's
 comment for the full rationale): Chemainus and Cowichan have long enough, reasonably
