@@ -1,0 +1,42 @@
+---
+title: "fishyG_modeloutputsforshiny_20260828"
+output: html_document
+date: "2026-08-28"
+---
+
+Grab the functions from previously defined in script
+```{r}
+source("~/Desktop/fishyG/contributor_folders/Hannah_folder/fishyG_loyomodel_cowichan_20260828.R")
+```
+
+Define links to data for all streams
+```{r}
+STREAMS <- data.frame(
+  stream = c("COWICHAN RIVER", "CHEMAINUS RIVER", "LILQUALICUM RIVER", "NANAIMO RIVER"),
+  salmon_url = c("https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/fb5467aafebe8ce24a997c6e2d98bc2636ad769d/data/Salmon%20Data/COWICHAN%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/CHEMAINUS%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/LITTLE%20QUALICUM%20RIVER_salmon_data.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/bb30d9a143e4860ffa98bfac3b2b236436496f1d/data/Salmon%20Data/NANAIMO%20RIVER_salmon_data.csv"),
+  flow_url   = c("https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/fb5467aafebe8ce24a997c6e2d98bc2636ad769d/data/Cowichan_Riv_Flow.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Chemanius_Riv_Flow.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/LilQualicum_Riv_Flow.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/Nanaimo_Riv_Flow.csv"),
+  temp_url   = c("https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/fb5467aafebe8ce24a997c6e2d98bc2636ad769d/data/cowichan_temp_daily.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/chemainus_temp_daily.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/little_qualicum_temp_daily.csv", "https://github.com/oceanhackweek/ohw26_proj_fishyG/blob/main/data/nanaimo_temp_daily.csv"),
+  stringsAsFactors = FALSE)
+```
+
+Try running model for each stream
+```{r}
+if (sys.nframe() == 0) {
+  
+  ## Default: no temperature. The Cowichan temperature record is ~2 years,
+  ## so including it would reduce the model to ~2 usable years.
+  ## Both models: arrival timing and run abundance.
+  res <- run_streams(STREAMS, covars = COVARS_NOTEMP,
+                     covars_abund = COVARS_ABUND)
+  for (r in res) report(r)
+  
+  ## the year-level abundance table, if you want it directly
+  # res[[1]]$abundance$table
+  
+  ## To see what including temperature costs:
+  # res_t <- run_streams(STREAMS, covars = COVARS_FULL,
+  #                      covars_abund = COVARS_ABUND_T)
+}
+
+```
+
