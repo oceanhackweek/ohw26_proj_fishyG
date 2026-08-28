@@ -40,3 +40,19 @@ if (sys.nframe() == 0) {
 
 ```
 
+For each stream, generate validation plot #5 observed v predicted 
+save as rds & push to linneah
+```{r}
+# note that reach component of the list res[[4]] is a diff stream -- cow, chem, lilq, nan
+#plot_performance(res[[1]]) -> full
+
+panel_abundance_time(res[[1]]$abundance) -> cow
+saveRDS(cow, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/cow_obsvpred.rds")
+panel_abundance_time(res[[2]]$abundance) -> chem
+saveRDS(chem, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/chem_obsvpred.rds")
+panel_abundance_time(res[[3]]$abundance) -> lilq
+saveRDS(lilq, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/lilq_obsvpred.rds")
+panel_abundance_time(res[[4]]$abundance) -> nan
+saveRDS(nan, file = "/home/jovyan/Desktop/fishyG/data/yearplotsforsalmonstreams/nan_obsvpred.rds")
+```
+
