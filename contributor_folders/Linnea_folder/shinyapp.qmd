@@ -91,13 +91,14 @@ ui <- fluidPage(
                          "Mean precipitation" = "pr",
                          "Max temperature" = "tmax"),
              selected = "pr"),
-    sliderInput("date", "Month:",
-            min = min(tm_pr), max = max(tm_pr), value = max(tm_pr),
-            timeFormat = "%b %Y",
-            animate = animationOptions(interval = 400, loop = TRUE))
+  sliderInput("idx", "Month:", min = 1, max = length(tm_pr),
+            value = length(tm_pr), step = 1,
+            animate = animationOptions(interval = 1200, loop = TRUE)) 
     )
   )
 
+pr_s   <- disagg(pr, fact = 8, method = "bilinear")
+tmax_s <- disagg(tmax, fact = 8, method = "bilinear")
 
 server <- function(input, output, session) {
   
@@ -111,8 +112,7 @@ server <- function(input, output, session) {
     addProviderTiles(providers$Esri.WorldImagery, group = "Satellite") %>%
       fitBounds(min(river_coords$longitude), min(river_coords$latitude), max(river_coords$longitude), max(river_coords$latitude)) %>%
       addLayersControl(baseGroups = c("Street", "Satellite"),
-                     overlayGroups = c("Climate", "Sites"),
-                     options = layersControlOptions(collapsed = FALSE))
+                     options = layersControlOptions(collapsed = TRUE))
     
   })
   
@@ -122,8 +122,8 @@ server <- function(input, output, session) {
       clearControls()
       req(input$layer != "none")
       
-      idx <- which.min(abs(as.numeric(tm_pr) - as.numeric(input$date)))
-      req(length(idx) == 1)
+      idx <- input$idx
+      req(!is.null(idx))
       
        if (input$layer == "pr") {
     r <- pr[[idx]]; p <- pal_p; stack_vals <- values(pr); unit <- "mm/month"
@@ -150,6 +150,7 @@ server <- function(input, output, session) {
                    fillOpacity = 0.9,
                    stroke = FALSE,
                    radius = 6,
+                   layerId = ~stream_name_pse,
                    popup = ~paste0("<b>", stream_name_pse, "</b><br>Model: ", model))
   })
   
