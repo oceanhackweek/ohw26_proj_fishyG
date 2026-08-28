@@ -2,30 +2,17 @@
 
 Repository for the OceanHackWeek26 fishyG project
 
-**Folder Structure**
-
-* `contributor_folders` (optional) Each contributor can make a folder here and 
-push their work here during the week. This will allow everyone to see each others work but prevent any merge conflicts. It is good if participants are new to collaborative coding.
-* `final_notebooks` When the team develops shared final notebooks, they 
-can be shared here. Make sure to communicate so that you limit merge conflicts.
-* `scripts` Shared scripts or functions can be added here.
-* `data` Shared dataset can be shared here. Note, do not put large datasets on GitHub. Speak to the organizers if you 
-need to share large datasets. Each team member can have a version of the dataset locally in the same folder to 
-preserve relative paths, but the dataset does not need to be added to git/GitHub (you can use `.gitignore`).
-
-You can start with a simple structure and as you progress you can refine it to contain more components. [Here](https://cookiecutter-data-science.drivendata.org/#directory-structure) is an example of a more elaborate structure for a data science project.
-
 ## Project fishyG
 
 ## Predicting and visualizing salmon spawning in the Strait of Georgia based on local stream conditions
 
 ## Collaborators
 
-| Name                | Role                |
-|---------------------|---------------------|
-| Zoe Crookshank      |  |
-| Linnea Goh          |  |
-| Hannah Budroe       |  |
+| Name                | Role                | Github    |
+|---------------------|---------------------|---------------------|
+| Zoe Crookshank      |  Data Acquisition and Initial Cleaning|https://github.com/zcrookshank |
+| Linnea Goh          |  Modelling and Data Processing|https://github.com/linneagoh |
+| Hannah Budroe       |  Shiny App Design and Development|https://github.com/hbudroe |
 
 
 
@@ -34,7 +21,7 @@ You can start with a simple structure and as you progress you can refine it to c
 * Initial idea: Predict and visualize salmon spawning in the Strait of Georgia based on local stream conditions
 * Ideation Slide: https://docs.google.com/presentation/d/1_KLEDpLLvtKpH3awDlZRAiOKuHzbEti4CWmhEykuCG8/edit?slide=id.g3f84d57b716_31_0#slide=id.g3f84d57b716_31_0 
 * Slack channel: ohw26_proj_fishyG
-* Final presentation: Add link tbd
+* Final presentation: https://docs.google.com/presentation/d/1w-ZIwuPwnJTOPN1T32VMp2RVbx90vWiTed2cLdvnsfU/edit?usp=sharing
 
 ## Background
 we <3 fish
@@ -43,15 +30,39 @@ we <3 fish
 To build a model & visualize a map predicting salmon return to several streams in the Strait of Georgia based upon current stream conditions. We have focused on 4 rivers: Nanaimo River, Qualicum River, Chemainus River, Cowichan River; and we are focused on the Fall Chinook run.
 
 ## Datasets
-- Gov of Canada NuSEDS
-- Canadian Hydrological Flow Data
-- Pacific Salmon Stream Temperature
+Salmon River arrival data:
+Focusing on fall chinook runs in this area - data from NuSEDs
+
+https://open.canada.ca/data/en/dataset/c48669a3-045b-400d-b730-48aafe8c5ee6/resource/1d343cd3-5614-3bda-814b-48a08084b051 
+
+River flow:
+https://wateroffice.ec.gc.ca/map/index_e.html?type=historical
+
+Nanaimo riv: 08HB034 - NANAIMO RIVER NEAR CASSIDY
+
+Little Qualicum Riv: 08HB029 - LITTLE QUALICUM RIVER NEAR QUALICUM BEACH
+
+Chemanius Riv: 08HA001 - CHEMAINUS RIVER NEAR WESTHOLME
+
+Cowichan Riv: 08HA011 - COWICHAN RIVER NEAR DUNCAN
+
+Trend data:
+Freshwater life-cycle timing of Pacific salmon and steelhead (Oncorhynchus spp.) in Canada paper
+
+Data source: https://datadryad.org/dataset/doi:10.5061/dryad.wm37pvmwx
+
+“Global” weather:
+Paper: ​​https://www.mdpi.com/2306-5338/13/2/52 
+
+Data source: https://services.pacificclimate.org/portal/gridded_observations/map/ + Daymet + NCEP North American Regional Reanalysis (NARR)
 
 ## Workflow/Roadmap
 
 ## Results/Findings
+No clear relationship between temperature and flow for the four rivers chosen here, date currently still best predictor but this could be a limitation of the model and validation methods
 
 ## Lessons Learned
+We have made friends with git mostly. 
 
 ## References
 
